@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
 	string srcFmt;
 	string dstDir;
 	string elecSet;
-	string pinStim;
+	string pinPath;
 	int f_begin, f_interval, f_end;
     
     cvNamedWindow("window",1);
@@ -56,10 +56,10 @@ int main(int argc, char* argv[])
 		
 		std::vector<MLARR::IO::Electrode> elecs;
 		if( values.count("pins") ){
-			pinStim = values["pins"].as<string>();
-			MLARR::IO::Electrode::loadElectrodeSetting( pinStim, elecs );
+			pinPath = values["pins"].as<string>();
+			MLARR::IO::Electrode::loadElectrodeSetting( pinPath, elecs );
 		}
-
+        
 		if( !values.count("online") ){
 			
 			if( camType == "dalsa" ){

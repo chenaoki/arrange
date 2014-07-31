@@ -15,9 +15,9 @@ namespace MLARR{
 
 		enum ECamState{ standby, run, stop, error };
 
-		enum EStringColor{ white = 0, black, red, geen, blue };
+		enum EColor{ white = 0, black, red, geen, blue };
 		
-		const cv::Scalar strColor[5] = {
+		const cv::Scalar arrColor[5] = {
 			cv::Scalar(255,255,255),
 			cv::Scalar(0,0,0),
 			cv::Scalar(0,0,200),
@@ -281,6 +281,7 @@ namespace MLARR{
 			const int strFontStyle;
 			const double strFontSize;
 			const cv::Point strDrawPoint;
+            int flg_update;
 		protected:
 			void updateCVImage(void){
 				cv::Mat imgTemp(srcImg.height, srcImg.width, CV_8UC3);
@@ -301,35 +302,42 @@ namespace MLARR{
 			};
 		public:
 			explicit Display<T>( const std::string _winName, Image<T>& _srcImage, const T& _maxVal, const T& _minVal, const ColorMap& _colMap ) 
-				: winName(_winName), srcImg(_srcImage), maxVal(_maxVal), minVal(_minVal) ,colMap(_colMap), cv_img(_srcImage.height, _srcImage.width, CV_8UC3), strFontSize(0.4), strFontStyle(cv::FONT_HERSHEY_SIMPLEX), strDrawPoint(1,15){
+				: winName(_winName), srcImg(_srcImage), maxVal(_maxVal), minVal(_minVal) ,colMap(_colMap), cv_img(_srcImage.height, _srcImage.width, CV_8UC3), strFontSize(0.4), strFontStyle(cv::FONT_HERSHEY_SIMPLEX), strDrawPoint(1,15), flg_update(0){
 					cv::namedWindow(winName);
 			};
 			Display<T>( const std::string _winName, Image<T>& _srcImage, const T& _maxVal, const T& _minVal, const ColorMap& _colMap, const int dispWidth, const int dispHeight )
-				: winName(_winName), srcImg(_srcImage), maxVal(_maxVal), minVal(_minVal) ,colMap(_colMap), cv_img(dispHeight, dispWidth, CV_8UC3), strFontSize(0.4), strFontStyle(cv::FONT_HERSHEY_SIMPLEX), strDrawPoint(1,15){
+				: winName(_winName), srcImg(_srcImage), maxVal(_maxVal), minVal(_minVal) ,colMap(_colMap), cv_img(dispHeight, dispWidth, CV_8UC3), strFontSize(0.4), strFontStyle(cv::FONT_HERSHEY_SIMPLEX), strDrawPoint(1,15), flg_update(0){
 					cv::namedWindow(winName);
 			}
 			virtual ~Display(void){
 				cv::destroyWindow(winName);
 			};
+            void drawRect( int left, int top, int right, int bottom, int color ){
+				if( !flg_update ){ updateCVImage(); flg_update = 1; }
+                cv::rectangle(cv_img, cv::Point(left, top), cv::Point(right, bottom), arrColor[color]);
+            }
 			void show(void){
-				updateCVImage();
+				if( !flg_update ) updateCVImage();
 				cv::imshow(winName, cv_img);
 				cv::waitKey(10);
+                flg_update = 0;
 			};
 			void show(const std::string& str, int color){
-				updateCVImage();
-				cv::putText(cv_img, str.c_str(), strDrawPoint, strFontStyle, strFontSize, strColor[color] );
+				if( !flg_update ) updateCVImage();
+				cv::putText(cv_img, str.c_str(), strDrawPoint, strFontStyle, strFontSize, arrColor[color] );
 				cv::imshow(winName, cv_img);
 				cv::waitKey(10);
-			}
+                flg_update = 0;
+			};
 			void show(const int msec, int color){
-				updateCVImage();
+				if( !flg_update ) updateCVImage();
 				char cstr[255];
 				sprintf( cstr, "%dms", msec );
-				cv::putText(cv_img, cstr, strDrawPoint, strFontStyle, strFontSize, strColor[color] );
+				cv::putText(cv_img, cstr, strDrawPoint, strFontStyle, strFontSize, arrColor[color] );
 				cv::imshow(winName, cv_img);
 				cv::waitKey(10);
-			}
+                flg_update = 0;
+			};
 			void save( const std::string& saveDir, const std::string& format, const int frameNum ){
 				char path[255];
 				sprintf( path, format.c_str(), saveDir.c_str(), frameNum);

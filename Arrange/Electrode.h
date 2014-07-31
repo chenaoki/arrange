@@ -8,30 +8,17 @@
 namespace MLARR{
 	namespace IO{
 
-		class Electrode
+		class Electrode : public MLARR::Basic::Point<int>
 		{
 		private:
 			int id;
-			MLARR::Basic::Point<int> imgPos;
-			MLARR::Basic::Point<double> axisMajor;
-			MLARR::Basic::Point<double> axisMinor;
 
 		public:
-			Electrode(int _id, int _posX, int _posY, double majorX, double majorY, double minorX, double minorY) 
-				: id(_id), imgPos(_posX, _posY), axisMajor(majorX, majorY), axisMinor(minorX, minorY){};
+			Electrode(int _id, int _posX, int _posY)
+            : MLARR::Basic::Point<int>(_posX, _posY), id(_id){};
 			virtual ~Electrode(void){};
 			
 			const int& getID(void){ return id; };
-			const MLARR::Basic::Point<int>& getPos(void){ return imgPos; };
-
-			void getFiberCordinates( MLARR::Basic::Point<int>& refPos, MLARR::Basic::Point<double>& cordinates ){
-
-				MLARR::Basic::Point<int> diff_i = refPos - imgPos;
-				MLARR::Basic::Point<double> diff_f( diff_i.getX(), diff_i.getY() );
-				cordinates = MLARR::Basic::Point<double>( diff_f * axisMajor / axisMajor.abs(), diff_f * axisMinor / axisMinor.abs() );
-				return;
-
-			};
 
 		public:
 			
@@ -48,11 +35,7 @@ namespace MLARR{
 								dst.push_back( Electrode( 
 									atoi(v[0].c_str()), 
 									atoi(v[1].c_str()), 
-									atoi(v[2].c_str()), 
-									atof(v[3].c_str()), 
-									atof(v[4].c_str()), 
-									atof(v[5].c_str()), 
-									atof(v[6].c_str()) 
+									atoi(v[2].c_str())
 								));
 							}
 						}

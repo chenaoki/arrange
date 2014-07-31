@@ -25,14 +25,14 @@ namespace MLARR{
 		{
 		protected:
 			MLARR::Basic::Image<T_IN>& srcImg;
-			MLARR::Basic::Image<char> im_roi;
+			MLARR::Basic::Image<unsigned char> im_roi;
 		public:
 			explicit ImageAnalyzer( const int _height, const int _width, const T_OUT& iniValue,MLARR::Basic::Image<T_IN>& _srcImg )
 				: MLARR::Basic::Image<T_OUT>(_height, _width, iniValue), im_roi( _height, _width, 1 ), srcImg( _srcImg ){
 			};
 			virtual ~ImageAnalyzer(){};
-			const MLARR::Basic::Image<char>& getRoi(void){ return this->im_roi; };
-			void setRoi(const MLARR::Basic::Image<char>& src){ this->im_roi = src; };
+			const MLARR::Basic::Image<unsigned char>& getRoi(void){ return this->im_roi; };
+			void setRoi(const MLARR::Basic::Image<unsigned char>& src){ this->im_roi = src; };
 			virtual void execute(void) = 0; // implement analysis of srcImg.
 			
 		};
@@ -208,6 +208,28 @@ namespace MLARR{
 				delete temp;
 			};
 		};
+        
+        template<class T>
+        class MorphImage : public ImageAnalyzer<T, T>
+        {
+        protected:
+            int step;
+        public:
+            explicit MorphImage(MLARR::Analyzer::Image<T>& _srcImg, int _step)
+            : ImageAnalyzer<T,T>(_srcImg.height , _srcImg.width, 0, _srcImg ), step(_step){
+            };
+            ~MorphImage(void){};
+            void execute(void){
+                cv::Mat* temp = this->srcImg.clone();
+                cv::Mat dst(*temp);
+                if(step>0){
+                    cv::dilate( *temp, dst, cv::Mat(), cv::Point(-1,-1), step );
+                }else{
+                    cv::erode( *temp, dst, cv::Mat(), cv::Point(-1,-1), -step );
+                }
+                *dynamic_cast<MLARR::Basic::Image<T>*>(this) = dst;
+            };
+        };
 
 		template<class T>
 		class ImageThinOut : public ImageAnalyzer<T,T>
@@ -531,6 +553,80 @@ namespace MLARR{
 			};
 		};
         
+        class LabelImage : public ImageAnalyzer<unsigned char, unsigned char>{
+        protected:
+            std::map<int, int> map_LUT;
+            std::map<int, std::vector< MLARR::Basic::Point<int> > > map_cluster;
+        public:
+            std::vector< MLARR::Basic::Point<double> > vec_ps;
+        public:
+            explicit LabelImage(MLARR::Basic::Image<unsigned char>& _srcImg)
+            : ImageAnalyzer<unsigned char, unsigned char>( _srcImg.height, _srcImg.width, 0, _srcImg){};
+            virtual ~LabelImage(void){};
+            void execute(void){
+                
+                dynamic_cast<MLARR::Basic::Image<unsigned char>*>(this)->clear(0);
+                map_LUT.clear();
+                map_cluster.clear();
+                vec_ps.clear();
+                
+                int label = 1;
+				for( int h = 1; h < this->height - 1; h++){
+					for( int w = 1; w < this->width - 1; w++){
+                        if( *(this->srcImg.getRef(w, h))){
+                            int sum = 0;
+                            int tempLabel = -1;
+                            unsigned char v1 = *(this->getRef(w-1, h));
+                            unsigned char v2 = *(this->getRef(w+1, h-1));
+                            unsigned char v3 = *(this->getRef(w,   h-1));
+                            unsigned char v4 = *(this->getRef(w-1, h-1));
+                            sum = v1 + v2 + v3 + v4;
+                            if( sum == 0 ){
+                                tempLabel = ++label;
+                                map_LUT[tempLabel] = tempLabel;
+                            }else{
+                                int min = INT_MAX;
+                                if( v1 ) min = v1 < min ? v1 : min;
+                                if( v2 ) min = v2 < min ? v2 : min;
+                                if( v3 ) min = v3 < min ? v3 : min;
+                                if( v4 ) min = v4 < min ? v4 : min;
+                                tempLabel = min;
+                                if( v1 && min != v1 ) map_LUT[v1] = min;
+                                if( v2 && min != v2 ) map_LUT[v2] = min;
+                                if( v3 && min != v3 ) map_LUT[v3] = min;
+                                if( v4 && min != v4 ) map_LUT[v4] = min;
+                            }
+                            this->setValue(w, h, tempLabel);
+                        }
+                    }
+                }
+                
+                for( int h = 0; h < this->height; h++){
+					for( int w = 0; w < this->width; w++){
+                        if( *(this->getRef(w, h))){
+                            int tempLabel = map_LUT[*(this->getRef(w, h))];
+                            this->setValue(w, h, tempLabel );
+                            map_cluster[tempLabel].push_back(MLARR::Basic::Point<int>(w, h));
+                        }
+                    }
+                }
+                
+                std::map<int, std::vector<MLARR::Basic::Point<int>>>::iterator it;
+                for( it = this->map_cluster.begin(); it != map_cluster.end(); it++){
+                    MLARR::Basic::Point<int> sum(0,0);
+                    MLARR::Basic::Point<double> mean(0,0);
+                    std::vector<MLARR::Basic::Point<int>>::iterator v;
+                    for( v = it->second.begin(); v != it->second.end(); v++ ){
+                        sum = sum + *v;
+                    }
+                    mean.setX( sum.getX() / static_cast<double>(it->second.size()) );
+                    mean.setY( sum.getY() / static_cast<double>(it->second.size()) );
+                    this->vec_ps.push_back(mean);
+                }
+                
+            };
+        };
+        
         template <class T>
 		class NormalPhaseSingularityAnalyzer : public ImageAnalyzer<T,T>{
         public:
@@ -572,17 +668,18 @@ namespace MLARR{
 		};
         
         template <class T>
-        class DivPhaseSingularityAnalyzer : public ImageAnalyzer<T, T>{
+        class DivPhaseSingularityAnalyzer : public ImageAnalyzer<T, unsigned char>{
         private:
             int winSize;
+            T thre;
         public:
-            explicit DivPhaseSingularityAnalyzer( MLARR::Basic::Image<T> _src, int _winSize)
-            :ImageAnalyzer<double,double>( _src.height, _src.width, 0, _src), winSize( _winSize ){};
+            explicit DivPhaseSingularityAnalyzer( MLARR::Basic::Image<T>& _src, int _winSize, T _thre)
+            :ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), winSize( _winSize ), thre(_thre) {};
             ~DivPhaseSingularityAnalyzer(void){};
         public:
             void execute(void){
                 
-                dynamic_cast<MLARR::Basic::Image<T>*>(this)->clear(0);
+                dynamic_cast<MLARR::Basic::Image<unsigned char>*>(this)->clear(0);
 				for( int h = 0; h <= this->height - winSize; h++){
 					for( int w = 0; w <= this->width - winSize; w++){
                         int h_c = h + ( winSize - 1 )/2;
@@ -590,13 +687,18 @@ namespace MLARR{
 
 						if( *(this->im_roi.getRef(w_c, h_c)) ){
                             
+                            /*
                             double base = 0.0;
                             for( int i = 0; i < winSize; i++){
                                 for( int j = 0; j < winSize; j++){
-                                    base += *(this->srcImg.getRef(w+i, h+j));
+                                    double value = *(this->srcImg.getRef(w+i, h+j));
+                                    // base += *(this->srcImg.getRef(w+i, h+j));
+                                    base += value;
                                 }
                             }
                             base /= static_cast<double>( winSize * winSize );
+                            */
+                            double base = *(this->srcImg.getRef(w_c, h_c));
                             
 							// evaluate div
                             double div = 0.0;
@@ -608,8 +710,8 @@ namespace MLARR{
 								}
 							}
                             div = sqrt( div ) / static_cast<double>( winSize * winSize );
-                            div /= 2 * M_PI;
-							this->setValue(w_c, h_c, static_cast<T>(div));
+                            div /= M_PI;
+							this->setValue(w_c, h_c, static_cast<T>(div) > this->thre ? 1 : 0);
 						}
 					}
 				}

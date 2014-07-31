@@ -12,7 +12,7 @@ namespace MLARR{
 		class MovieAnalyzer : public Image<T_OUT>{
 		protected:
             MLARR::Basic::Image<T_IN>& srcImg;
-			MLARR::Basic::Image<char> im_roi;
+			MLARR::Basic::Image<unsigned char> im_roi;
 			std::vector< Image<T_IN> > srcImgBuf;
 			std::vector< Image<T_OUT> > outImgBuf;
 			int nBufSrc; 
@@ -27,7 +27,7 @@ namespace MLARR{
 			};
 			virtual ~MovieAnalyzer(void){};
 			const Image<char>& getRoi(void){ return im_roi; };
-			void setRoi(const Image<char>& src){ im_roi = src; };
+			void setRoi(const Image<unsigned char>& src){ im_roi = src; };
 			void updateSrc(void){
 				this->srcImgBuf.push_back( this->srcImg );
 				while( this->srcImgBuf.size() > static_cast<size_t>(nBufSrc) ){

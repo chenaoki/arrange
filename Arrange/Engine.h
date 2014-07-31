@@ -39,7 +39,7 @@ namespace MLARR{
 			const std::string dstDir;
 
 		public:
-			EngineOffLine( CAM& _cam, std::vector<Electrode>& _electrodes, const std::string _dstDir) 
+			EngineOffLine( CAM& _cam, std::vector<MLARR::IO::Electrode>& _electrodes, const std::string _dstDir)
 				: dstDir( _dstDir ), cam(_cam), electrodes(_electrodes) {
 					std::string temp;
 					mkdir( temp.c_str() , 0777);
@@ -80,7 +80,7 @@ namespace MLARR{
 				MinImageAnalyzer<unsigned short> minEng(USHRT_MAX, cam);
 				OpticalImageAnalyzer<unsigned short> optEng(cam, maxEng, minEng, 20);
 
-				Dumper<char> dump_roi( optEng.getRoi(), dstDir, fmt_raw_roi);
+				Dumper<unsigned char> dump_roi( optEng.getRoi(), dstDir, fmt_raw_roi);
 				Dumper<double> dump_opt( optEng, dstDir, fmt_raw_opt);
 				
 				Display<unsigned short> disp_cam("gray", cam, ( 1 << cam.bits )-1, 0, colMap_gray );
@@ -125,7 +125,7 @@ namespace MLARR{
 				RawFileCamera<double> optCam( 
 					cam.width, cam.height, std::numeric_limits<double>::digits, cam.fps, 
 					dstDir, fmt_raw_opt, cam.f_start,cam.f_skip,cam.f_stop );
-				RawFileCamera<char> camRoi(
+				RawFileCamera<unsigned char> camRoi(
 					cam.width, cam.height, std::numeric_limits<char>::digits, cam.fps, 
 					dstDir, fmt_raw_roi, 1,1,1);
 
@@ -134,11 +134,11 @@ namespace MLARR{
 				MLARR::Analyzer::HilbertAnalyzer<double> hilbertEng(
 					optQuarter, minPeakDistance, filterSize, 
 					cam.f_start,cam.f_skip,cam.f_stop);
-				MLARR::Analyzer::ImageThinOut<char> roiHalf( camRoi );
-				MLARR::Analyzer::ImageThinOut<char> roiQuarter( dynamic_cast<Image<char>&>(roiHalf) );
+				MLARR::Analyzer::ImageThinOut<unsigned char> roiHalf( camRoi );
+				MLARR::Analyzer::ImageThinOut<unsigned char> roiQuarter( dynamic_cast<Image<unsigned char>&>(roiHalf) );
 
 				Dumper<double> dump_hilbert( hilbertEng, dstDir, fmt_raw_hbt);
-				Dumper<char> dump_roi_quarter( roiQuarter, dstDir, fmt_raw_roi_q);
+				Dumper<unsigned char> dump_roi_quarter( roiQuarter, dstDir, fmt_raw_roi_q);
 
 				Display<double> disp_opt("optical", optCam, 1.0, 0.0, colMap_orange);
 				Display<double> disp_hilbert("hilbert", hilbertEng, M_PI, -M_PI, colMap_hsv);
@@ -201,16 +201,15 @@ namespace MLARR{
 					ofs << camHbt.getTime() << " ";
 					vector<MLARR::IO::Electrode>::iterator it;
 					for( it = electrodes.begin(); it != electrodes.end(); it++){
-						MLARR::Basic::Point<int> pos = it->getPos();
-						int x  = pos.getX();
-						int y  = pos.getY();
-						int id = it->getID();
+						int x  = it->getX();
+						int y  = it->getY();
+                        int i = it->getID();
 						MLARR::Analyzer::ImageCropper<double> crop(  dynamic_cast<Image<double>&>(camHbt), x/4-2, y/4-2, 5, 5 );
 						MLARR::Analyzer::MedianFilter<double> hbtFil(  dynamic_cast<Image<double>&>(crop), 5 );
 						crop.execute();
 						hbtFil.execute();
 						double phase = *( hbtFil.getRef( 2, 2) );
-						ofs << id << " " << phase << " ";
+						ofs << i << " " << phase << " ";
 					}
 					ofs << endl;
 
@@ -225,55 +224,99 @@ namespace MLARR{
 			void phaseSingularityAnalysis(void)
 			{
 				using namespace std;
-
+                
+                RawFileCamera<double> camOpt(
+                     cam.width, cam.height, std::numeric_limits<double>::digits, cam.fps,
+                     dstDir, fmt_raw_opt, cam.f_start,cam.f_skip,cam.f_stop );
 				RawFileCamera<double> camPhase(
 					cam.width/4, cam.height/4, std::numeric_limits<double>::digits, cam.fps,
 					dstDir, fmt_raw_hbt, cam.f_start,cam.f_skip,cam.f_stop );
+				RawFileCamera<unsigned char> camRoi(
+                    cam.width/4, cam.height/4, std::numeric_limits<char>::digits, cam.fps,
+                    dstDir, fmt_raw_roi_q, 1,1,1);
+                
+                MLARR::Analyzer::MorphImage<unsigned char> preOpenRoi(camRoi, 3);
+                MLARR::Analyzer::MorphImage<unsigned char> closeRoi(preOpenRoi, -13);
                 MLARR::Analyzer::MedianFilter<double> imgMed( dynamic_cast<Image<double>&>(camPhase), 5);
                 MLARR::Analyzer::PhaseSpacialFilter<double> imgFil( dynamic_cast<Image<double>&>(imgMed), 5,5, MLARR::Analyzer::coefficients.vec_gaussian_5x5 );
-                MLARR::Analyzer::NormalPhaseSingularityAnalyzer<double> imgPS(imgMed);
+                MLARR::Analyzer::DivPhaseSingularityAnalyzer<double> imgPS(dynamic_cast<Image<double>&>(imgFil), 3, 0.125);
+                MLARR::Analyzer::LabelImage imgLabel(dynamic_cast<Image<unsigned char>&>(imgPS));
 
-
-                Display<double> dispPhase("Phase Map", camPhase, M_PI, -M_PI, colMap_hsv);
-                Display<double> dispMed  ("Filtered Phase Map", imgFil, M_PI, -M_PI, colMap_hsv);
-                Display<double> dispPS   ("Phase Singurality Image", imgPS, 2 * M_PI, -2 * M_PI, colMap_hsv);
-
-                /*
-                 Display<double> dispDiffX("Phase Diff Image (X)", imgPS.imgDiffX, M_PI, -M_PI, colMap_hsv);
-                 Display<double> dispDiffY("Phase Diff Image (Y)", imgPS.imgDiffY, M_PI, -M_PI, colMap_hsv);
-                 Display<double> dispCurlX("Phase Curl Image (X)", imgPS.imgCurlX, M_PI, -M_PI, colMap_hsv);
-                 Display<double> dispCurlY("Phase Curl Image (Y)", imgPS.imgCurlY, M_PI, -M_PI, colMap_hsv);
-                 */
+                camRoi.capture();
+                preOpenRoi.execute();
+                closeRoi.execute();
                 
+                /* set margin for PS detection area */
+                for( int m = 0; m < 5; m++ ){
+                    for( int i = 0; i < closeRoi.width; i++ ){
+                        closeRoi.setValue( i, m, 0);
+                        closeRoi.setValue( i, closeRoi.height - 1 - m, 0);
+                    }
+                    for( int j = 0; j < closeRoi.height; j++ ){
+                        closeRoi.setValue( m, j, 0);
+                        closeRoi.setValue( closeRoi.width - 1 - m, j, 0);
+                    }
+                }
+                for( int j = 0; j < closeRoi.height; j++ ){
+                    if( j < closeRoi.height / 2 ) {
+                        for( int i = 0; i < closeRoi.width; i++ ){
+                            closeRoi.setValue( i, j, 0);
+                        }
+                    }
+                }
+                
+                
+                imgPS.setRoi( dynamic_cast<const Image<unsigned char>&>(closeRoi) );
+                
+
                 /*
-                Dumper<double> dumpCurlX( imgPS.imgCurlX, dstDir, "%s/log/curl_x_%05d.txt");
-                Dumper<double> dumpCurlY( imgPS.imgCurlY, dstDir, "%s/log/curl_y_%05d.txt");
-                Dumper<double> dumpCurlA( imgPS,          dstDir, "%s/log/curl_a_%05d.txt");
+                Display<unsigned char> dispCloseRoi("closed roi", closeRoi, 1, 0, colMap_gray);
+                Display<double> dispPhase("Phase Map", camPhase, M_PI, -M_PI, colMap_hsv);
+                Display<double> dispMed  ("Median Phase Map", imgMed, M_PI, -M_PI, colMap_hsv);
+                Display<double> dispFil  ("Filtered Phase Map", imgFil, M_PI, -M_PI, colMap_hsv);
+                Display<unsigned char> dispPS   ("Phase Singurality Image", imgPS, 1, 0, colMap_gray);
+                Display<unsigned char> dispLabel("Phase Singurality Label", imgLabel, 4, 0, colMap_gray);
                 */
-					
+                Display<double> disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
+
+                
                 camPhase.initialize();
                 while( stop != camPhase.state && error != camPhase.state ){
 
                     camPhase.capture();
-                    imgMed.execute();
+                    camOpt.capture();
                     imgFil.execute();
+                    imgMed.execute();
                     imgPS.execute();
+                    imgLabel.execute();
                     
+                    std::vector<MLARR::Basic::Point<double>>::iterator it = imgLabel.vec_ps.begin();
+                    while( it != imgLabel.vec_ps.end() ){
+                        disp_opt.drawRect(
+                            static_cast<int>(it->getX() - 2)*4,
+                            static_cast<int>(it->getY() - 2)*4,
+                            static_cast<int>(it->getX() + 2)*4,
+                            static_cast<int>(it->getY() + 2)*4,
+                                         white);
+                        it++;
+                    }
+                    
+                    /*
                     dispPhase.show( camPhase.getTime(), red);
+                    dispFil.show( camPhase.getTime(), red);
                     dispMed.show( camPhase.getTime(), red );
                     dispPS.show( camPhase.getTime(), red);
-                    
+                    dispLabel.show( camPhase.getTime(), red);
                     dispMed.save(dstDir, fmt_jpg_hbf, camPhase.getTime());
                     dispPS.save(dstDir, fmt_jpg_psh, camPhase.getTime());
+                    */
+                    disp_opt.show( camPhase.getTime(), red);
                     
                     /*
                     dispDiffX.show(camPhase.getTime(), red);
                     dispDiffY.show(camPhase.getTime(), red);
                     dispCurlX.show(camPhase.getTime(), red);
                     dispCurlY.show(camPhase.getTime(), red);
-                    */
-                   
-                    /*
                     dumpCurlX.dumpText(camPhase.getTime());
                     dumpCurlY.dumpText(camPhase.getTime());
                     dumpCurlA.dumpText(camPhase.getTime());
