@@ -131,7 +131,22 @@ namespace MLARR{
 				dst = src;
 			};
 		};
-
+        
+        template<class T>
+        class RawFileCameraFactory{
+        public:
+            static MLARR::IO::RawFileCamera<T>* create( std::string camType, const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop){
+                RawFileCamera<T>* cam = NULL;
+                if("dalsa" == camType ){
+                    cam = new DalsaRawFileCamera( _dirPath, _format, _f_start, _f_skip, _f_stop);
+                }else if( "max" == camType ){
+                    cam = new MaxRawFileCamera( _dirPath, _format, _f_start, _f_skip, _f_stop );
+                }else{
+                    throw "unknown camera type";
+                }
+                return cam;
+            };
+        };
 
 		class ColorMap
 		{

@@ -85,6 +85,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		66460F7E198B892F004C73FC /* picojson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = picojson.h; sourceTree = "<group>"; };
 		66556AA61966CE1200AF8E8F /* Arrange */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Arrange; sourceTree = BUILT_PRODUCTS_DIR; };
 		66556AA91966CE1200AF8E8F /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		66556AAB1966CE1200AF8E8F /* Arrange.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = Arrange.1; sourceTree = "<group>"; };
@@ -156,6 +157,7 @@
 		66556B2D1966D8D800AF8E8F /* coefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coefs.h; sourceTree = "<group>"; };
 		66556B2E1966D8D800AF8E8F /* IO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO.h; sourceTree = "<group>"; };
 		66556B301966D8FC00AF8E8F /* VectorAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VectorAnalyzer.h; sourceTree = "<group>"; };
+		66660B3F198FD69000AA108F /* Optical.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Optical.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -248,6 +250,8 @@
 		66556AA81966CE1200AF8E8F /* Arrange */ = {
 			isa = PBXGroup;
 			children = (
+				66660B3F198FD69000AA108F /* Optical.h */,
+				66460F7E198B892F004C73FC /* picojson.h */,
 				66556B301966D8FC00AF8E8F /* VectorAnalyzer.h */,
 				66556B2D1966D8D800AF8E8F /* coefs.h */,
 				66556B2E1966D8D800AF8E8F /* IO.h */,

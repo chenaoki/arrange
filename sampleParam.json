@@ -1,0 +1,40 @@
+{
+	"camType" : "max",
+	"dirPath" : "/usr/local/tmp/ExperimentData/20111214-3/C001S0005",
+	"dstDir" : "/usr/local/tmp/AnalysisResult/20111214-3/C001S0005",
+	"format" : "%s/C001S0005%06d.raww",
+	"frame" : {
+		"start":1, 
+		"skip":1,
+		"stop":500
+	},
+	"electrode" : [
+		{ "id" : 1, "x" : 292, "y" : 248 }, 
+		{ "id" : 2, "x" : 176, "y" : 296 }, 
+		{ "id" : 3, "x" : 280, "y" : 304 }, 
+		{ "id" : 4, "x" : 372, "y" : 280 },
+		{ "id" : 5, "x" : 288, "y" : 396 }
+	],
+	"revNorm" : {
+		"minDelta" : 20
+	},
+	"hilbert" : {
+		"size" : 128,
+		"minPeakDistance" : 20,
+		"filterSize" : 10
+	},
+	"phaseSingularity" : {
+		"openRoi" : 3,
+		"closeRoi" : 13,
+		"openPS" : 1,
+		"medianFilterSize" : 5,
+		"divSize" : 5,
+		"divThre" : 0.05,
+		"roiMargin" : {
+			"top"    : 0.4,
+			"bottom" : 0.1,
+			"left"   : 0.1,
+			"right"  : 0.1
+		}
+	}
+}

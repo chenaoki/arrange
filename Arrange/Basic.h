@@ -154,16 +154,16 @@ namespace MLARR{
 			const T* const getRef(void) const{ 
 				return this->getRef(0,0); 
 			};
-			T* getPtr(const int w, const int h){ 
+			T* getPtr(const int w, const int h) const{
 				return &(this->data[ getPos(w,h) ]);
 			};
-			T* getPtr(void){ 
+			T* getPtr(void) const{
 				return this->getPtr(0,0); 
 			};
 			void setValue( const int w, const int h, const T& value){ 
 				this->data[ getPos(w,h) ] = value; 
 			};
-			cv::Mat* clone(void){
+			cv::Mat* clone(void) const{
 				int type = CV_8U;
 				if( typeid(T) ==  typeid(unsigned char))   type = CV_8U;
 				if( typeid(T) ==  typeid(char))            type = CV_8S;
