@@ -20,8 +20,8 @@
 
 #include <boost/program_options.hpp>
 
-#ifdef _OSX_
+#ifdef _OSX
 #include <sys/types.h>
 #include <sys/stat.h>
-#endif // _OSX_
+#endif // _OSX
 
