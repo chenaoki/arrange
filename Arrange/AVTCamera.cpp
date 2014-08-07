@@ -38,12 +38,11 @@
 #include <strings.h>
 #endif
 
-#include "PvApi.h"
+using namespace MLARR::IO;
+using namespace MLARR::Basic;
 
+/*****************************************/
 
-
-/*using namespace MLARR::IO;
-using namespace MLARR::Basic;*/
 
 static const int camBit = 12;
 static const int default_camWidth = 640;
@@ -64,288 +63,303 @@ void Sleep(unsigned int time)
 }
 #endif
 
-// display the usage details
-void ShowUsage()
+// trim the supplied string left and right
+char* strtrim(char *aString)
 {
-    printf("usage: CamSetup -u <camera unique ID>| -i <camera IP> -l|-s <file>\n");
-    printf("-u\tcamera unique ID\n");
-    printf("-i\tcamera IP address\n");
-    printf("-l\tload setup\n");
-    printf("-s\tsave setup\n");
+    int i;
+    int lLength = static_cast<int>(strlen(aString));
+    char* lOut = aString;
+    
+    // trim right
+    for(i=lLength-1;i>=0;i--)
+        if(isspace(aString[i]))
+            aString[i]='\0';
+        else
+            break;
+    
+    lLength = static_cast<int>(strlen(aString));
+    
+    // trim left
+    for(i=0;i<lLength;i++)
+        if(isspace(aString[i]))
+            lOut = &aString[i+1];
+        else
+            break;
+    
+    return lOut;
 }
 
-//// trim the supplied string left and right
-//char* strtrim(char *aString)
-//{
-//    int i;
-//    int lLength = strlen(aString);
-//    char* lOut = aString;
-//    
-//    // trim right
-//    for(i=lLength-1;i>=0;i--)
-//        if(isspace(aString[i]))
-//            aString[i]='\0';
-//        else
-//            break;
-//    
-//    lLength = strlen(aString);
-//    
-//    // trim left
-//    for(i=0;i<lLength;i++)
-//        if(isspace(aString[i]))
-//            lOut = &aString[i+1];
-//        else
-//            break;
-//    
-//    return lOut;
-//}
+// set camera or driver attribute based on string value
+bool String2Value(tPvHandle aCamera,const char* aLabel,tPvDatatype aType,char* aValue)
+{
+    switch(aType)
+    {
+        case ePvDatatypeString:
+        {
+            return (PvAttrStringSet(aCamera,aLabel,aValue) == ePvErrSuccess);
+        }
+        case ePvDatatypeEnum:
+        {
+            return (PvAttrEnumSet(aCamera,aLabel,aValue) == ePvErrSuccess);
+        }
+        case ePvDatatypeUint32:
+        {
+            tPvUint32 lValue = atol(aValue);
+            tPvUint32 lMin,lMax;
+            
+            if(PvAttrRangeUint32(aCamera,aLabel,&lMin,&lMax) == ePvErrSuccess)
+            {
+                if(lMin > lValue)
+                    lValue = lMin;
+                else
+                    if(lMax < lValue)
+                        lValue = lMax;
+                
+                return PvAttrUint32Set(aCamera,aLabel,lValue) == ePvErrSuccess;
+            }
+            else
+                return false;
+        }
+        case ePvDatatypeFloat32:
+        {
+            tPvFloat32 lValue = (tPvFloat32)atof(aValue);
+            tPvFloat32 lMin,lMax;
+            
+            if(PvAttrRangeFloat32(aCamera,aLabel,&lMin,&lMax) == ePvErrSuccess)
+            {
+                if(lMin > lValue)
+                    lValue = lMin;
+                else
+                    if(lMax < lValue)
+                        lValue = lMax;
+                
+                return PvAttrFloat32Set(aCamera,aLabel,lValue) == ePvErrSuccess;
+            }
+            else
+                return false;
+        }
+        case ePvDatatypeBoolean:
+        {
+            if(!(strcmp(aValue,"true")))
+                return PvAttrBooleanSet(aCamera,aLabel,true) == ePvErrSuccess;
+            else
+                return PvAttrBooleanSet(aCamera,aLabel,false) == ePvErrSuccess;
+        }
+        default:
+            return false;
+    }
+}
 
-//// set camera or driver attribute based on string value
-//bool String2Value(tPvHandle aCamera,const char* aLabel,tPvDatatype aType,char* aValue)
-//{
-//    switch(aType)
-//    {
-//        case ePvDatatypeString:
-//        {
-//            return (PvAttrStringSet(aCamera,aLabel,aValue) == ePvErrSuccess);
-//        }
-//        case ePvDatatypeEnum:
-//        {
-//            return (PvAttrEnumSet(aCamera,aLabel,aValue) == ePvErrSuccess);
-//        }
-//        case ePvDatatypeUint32:
-//        {
-//            tPvUint32 lValue = atol(aValue);
-//            tPvUint32 lMin,lMax;
-//            
-//            if(PvAttrRangeUint32(aCamera,aLabel,&lMin,&lMax) == ePvErrSuccess)
-//            {
-//                if(lMin > lValue)
-//                    lValue = lMin;
-//                else
-//                    if(lMax < lValue)
-//                        lValue = lMax;
-//                
-//                return PvAttrUint32Set(aCamera,aLabel,lValue) == ePvErrSuccess;
-//            }
-//            else
-//                return false;
-//        }
-//        case ePvDatatypeFloat32:
-//        {
-//            tPvFloat32 lValue = (tPvFloat32)atof(aValue);
-//            tPvFloat32 lMin,lMax;
-//            
-//            if(PvAttrRangeFloat32(aCamera,aLabel,&lMin,&lMax) == ePvErrSuccess)
-//            {
-//                if(lMin > lValue)
-//                    lValue = lMin;
-//                else
-//                    if(lMax < lValue)
-//                        lValue = lMax;
-//                
-//                return PvAttrFloat32Set(aCamera,aLabel,lValue) == ePvErrSuccess;
-//            }
-//            else
-//                return false;
-//        }
-//        case ePvDatatypeBoolean:
-//        {
-//            if(!(strcmp(aValue,"true")))
-//                return PvAttrBooleanSet(aCamera,aLabel,true) == ePvErrSuccess;
-//            else
-//                return PvAttrBooleanSet(aCamera,aLabel,false) == ePvErrSuccess;
-//        }
-//        default:
-//            return false;
-//    }
-//}
-//
-//// encode the value of a given attribute in a string
-//bool Value2String(tPvHandle aCamera,const char* aLabel,tPvDatatype aType,char* aString,unsigned long aLength)
-//{
-//    switch(aType)
-//    {
-//        case ePvDatatypeString:
-//        {
-//            return PvAttrStringGet(aCamera,aLabel,aString,aLength,NULL) == ePvErrSuccess;
-//        }
-//        case ePvDatatypeEnum:
-//        {
-//            return PvAttrEnumGet(aCamera,aLabel,aString,aLength,NULL) == ePvErrSuccess;
-//        }
-//        case ePvDatatypeUint32:
-//        {
-//            tPvUint32 lValue;
-//            
-//            if(PvAttrUint32Get(aCamera,aLabel,&lValue) == ePvErrSuccess)
-//            {
-//                sprintf_s(aString, aLength, "%lu",lValue);
-//                return true;
-//            }
-//            else
-//                return false;
-//            
-//        }
-//        case ePvDatatypeFloat32:
-//        {
-//            tPvFloat32 lValue;
-//            
-//            if(PvAttrFloat32Get(aCamera,aLabel,&lValue) == ePvErrSuccess)
-//            {
-//                sprintf_s(aString, aLength, "%g",lValue);
-//                return true;
-//            }
-//            else
-//                return false;
-//        }
-//        case ePvDatatypeBoolean:
-//        {
-//            tPvBoolean lValue;
-//            
-//            if(PvAttrBooleanGet(aCamera,aLabel,&lValue) == ePvErrSuccess)
-//            {
-//                if(lValue)
-//                    strcpy_s(aString, aLength, "true");
-//                else
-//                    strcpy_s(aString, aLength, "false");
-//                
-//                return true;
-//            }
-//            else
-//                return false;
-//        }
-//        default:
-//            return false;
-//    }
-//}
-//
-//// write a given attribute in a text file
-//void WriteAttribute(tPvHandle aCamera,const char* aLabel,FILE* aFile)
-//{
-//    tPvAttributeInfo lInfo;
-//    
-//    if(PvAttrInfo(aCamera,aLabel,&lInfo) == ePvErrSuccess)
-//    {
-//        if(lInfo.Datatype != ePvDatatypeCommand &&
-//           (lInfo.Flags & ePvFlagWrite))
-//        {
-//            char lValue[128];
-//            
-//            //get attribute
-//			if(Value2String(aCamera,aLabel,lInfo.Datatype,lValue,128))
-//                fprintf(aFile,"%s = %s\n",aLabel,lValue);
-//            else
-//                fprintf(stderr,"attribute %s couldn't be saved\n",aLabel);
-//        }
-//    }
-//}
-//
-//// read the attribute from text file
-//void ReadAttribute(tPvHandle aCamera,char* aLine)
-//{
-//    char* lValue = strchr(aLine,'=');
-//    char* lLabel;
-//    
-//    if(lValue)
-//    {
-//        lValue[0] = '\0';
-//        lValue++;
-//        
-//        lLabel = strtrim(aLine);
-//        lValue = strtrim(lValue);
-//        
-//        if(strlen(lLabel) && strlen(lValue))
-//        {
-//            tPvAttributeInfo lInfo;
-//            
-//            if(PvAttrInfo(aCamera,lLabel,&lInfo) == ePvErrSuccess)
-//            {
-//                if(lInfo.Datatype != ePvDatatypeCommand &&
-//                   (lInfo.Flags & ePvFlagWrite))
-//                {
-//                    //set attribute
-//					if(!String2Value(aCamera,lLabel,lInfo.Datatype,lValue))
-//                        fprintf(stderr,"attribute %s couldn't be loaded\n",lLabel);
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//// load the setup of a camera from the given file
-//bool SetupLoad(tPvHandle aCamera,const char* aFile)
-//{
-//    FILE* lFile = NULL;
-//    
-//#ifdef _WINDOWS
-//    fopen_s(&lFile, aFile, "r");
-//#else
-//    lFile = fopen(aFile,"r");
-//#endif
-//    
-//    if(lFile)
-//    {
-//        char lLine[256];
-//        
-//        while(!feof(lFile))
-//        {
-//            //read attributes from file
-//			if(fgets(lLine,256,lFile))
-//                ReadAttribute(aCamera,lLine);
-//        }
-//        
-//        fclose(lFile);
-//        
-//        return true;
-//    }
-//    else
-//        return false;
-//}
+// encode the value of a given attribute in a string
+bool Value2String(tPvHandle aCamera,const char* aLabel,tPvDatatype aType,char* aString,unsigned long aLength)
+{
+    switch(aType)
+    {
+        case ePvDatatypeString:
+        {
+            return PvAttrStringGet(aCamera,aLabel,aString,aLength,NULL) == ePvErrSuccess;
+        }
+        case ePvDatatypeEnum:
+        {
+            return PvAttrEnumGet(aCamera,aLabel,aString,aLength,NULL) == ePvErrSuccess;
+        }
+        case ePvDatatypeUint32:
+        {
+            tPvUint32 lValue;
+            
+            if(PvAttrUint32Get(aCamera,aLabel,&lValue) == ePvErrSuccess)
+            {
+                sprintf_s(aString, aLength, "%lu",lValue);
+                return true;
+            }
+            else
+                return false;
+            
+        }
+        case ePvDatatypeFloat32:
+        {
+            tPvFloat32 lValue;
+            
+            if(PvAttrFloat32Get(aCamera,aLabel,&lValue) == ePvErrSuccess)
+            {
+                sprintf_s(aString, aLength, "%g",lValue);
+                return true;
+            }
+            else
+                return false;
+        }
+        case ePvDatatypeBoolean:
+        {
+            tPvBoolean lValue;
+            
+            if(PvAttrBooleanGet(aCamera,aLabel,&lValue) == ePvErrSuccess)
+            {
+                if(lValue)
+                    strcpy_s(aString, aLength, "true");
+                else
+                    strcpy_s(aString, aLength, "false");
+                
+                return true;
+            }
+            else
+                return false;
+        }
+        default:
+            return false;
+    }
+}
 
-//// save the setup of a camera from the given file
-//bool SetupSave(tPvHandle aCamera,const char* aFile)
-//{
-//    FILE* lFile = NULL;
-//    
-//#ifdef _WINDOWS
-//    fopen_s(&lFile, aFile, "w+");
-//#else
-//    lFile = fopen(aFile,"w+");
-//#endif
-//    
-//    if(lFile)
-//    {
-//        bool            lRet = true;
-//        tPvAttrListPtr  lAttrs;
-//        tPvUint32       lCount;
-//        
-//        //Get all attributes
-//		if(PvAttrList(aCamera,&lAttrs,&lCount) == ePvErrSuccess)
-//        {
-//            //Write attributes to file
-//			for(tPvUint32 i=0;i<lCount;i++)
-//                WriteAttribute(aCamera,lAttrs[i],lFile);
-//        }
-//        else
-//            lRet = false;
-//        
-//        fclose(lFile);
-//        
-//        return lRet;
-//    }
-//    else
-//        return false;
-//}
-//
-//
-//AVTCamera::AVTCamera(const std::string& paramFilePath)
-//: ICamera<unsigned short>(default_camWidth, default_camHeight, camBit, default_fps){
-//    
-//    
-//    
-//}
-//
-//AVTCamera::~AVTCamera(){
-//    
-//}
+// write a given attribute in a text file
+void WriteAttribute(tPvHandle aCamera,const char* aLabel,FILE* aFile)
+{
+    tPvAttributeInfo lInfo;
+    
+    if(PvAttrInfo(aCamera,aLabel,&lInfo) == ePvErrSuccess)
+    {
+        if(lInfo.Datatype != ePvDatatypeCommand &&
+           (lInfo.Flags & ePvFlagWrite))
+        {
+            char lValue[128];
+            
+            //get attribute
+			if(Value2String(aCamera,aLabel,lInfo.Datatype,lValue,128))
+                fprintf(aFile,"%s = %s\n",aLabel,lValue);
+            else
+                fprintf(stderr,"attribute %s couldn't be saved\n",aLabel);
+        }
+    }
+}
+
+// read the attribute from text file
+void ReadAttribute(tPvHandle aCamera,char* aLine)
+{
+    char* lValue = strchr(aLine,'=');
+    char* lLabel;
+    
+    if(lValue)
+    {
+        lValue[0] = '\0';
+        lValue++;
+        
+        lLabel = strtrim(aLine);
+        lValue = strtrim(lValue);
+        
+        if(strlen(lLabel) && strlen(lValue))
+        {
+            tPvAttributeInfo lInfo;
+            
+            if(PvAttrInfo(aCamera,lLabel,&lInfo) == ePvErrSuccess)
+            {
+                if(lInfo.Datatype != ePvDatatypeCommand &&
+                   (lInfo.Flags & ePvFlagWrite))
+                {
+                    //set attribute
+					if(!String2Value(aCamera,lLabel,lInfo.Datatype,lValue))
+                        fprintf(stderr,"attribute %s couldn't be loaded\n",lLabel);
+                }
+            }
+        }
+    }
+}
+
+
+// load the setup of a camera from the given file
+bool SetupLoad(tPvHandle aCamera,const char* aFile)
+{
+    FILE* lFile = NULL;
+    
+#ifdef _WINDOWS
+    fopen_s(&lFile, aFile, "r");
+#else
+    lFile = fopen(aFile,"r");
+#endif
+    
+    if(lFile)
+    {
+        char lLine[256];
+        
+        while(!feof(lFile))
+        {
+            //read attributes from file
+			if(fgets(lLine,256,lFile))
+                ReadAttribute(aCamera,lLine);
+        }
+        
+        fclose(lFile);
+        
+        return true;
+    }
+    else
+        return false;
+}
+
+// save the setup of a camera from the given file
+bool SetupSave(tPvHandle aCamera,const char* aFile)
+{
+    FILE* lFile = NULL;
+    
+#ifdef _WINDOWS
+    fopen_s(&lFile, aFile, "w+");
+#else
+    lFile = fopen(aFile,"w+");
+#endif
+    
+    if(lFile)
+    {
+        bool            lRet = true;
+        tPvAttrListPtr  lAttrs;
+        tPvUint32       lCount;
+        
+        //Get all attributes
+		if(PvAttrList(aCamera,&lAttrs,&lCount) == ePvErrSuccess)
+        {
+            //Write attributes to file
+			for(tPvUint32 i=0;i<lCount;i++)
+                WriteAttribute(aCamera,lAttrs[i],lFile);
+        }
+        else
+            lRet = false;
+        
+        fclose(lFile);
+        
+        return lRet;
+    }
+    else
+        return false;
+}
+
+
+AVTCamera::AVTCamera(const std::string& ip, const std::string& paramFilePath)
+: ICamera<unsigned short>(default_camWidth, default_camHeight, camBit, default_fps), aCamera(nullptr){
+    
+    unsigned long addr = inet_addr(ip.c_str());
+    
+    PvCameraOpen( addr, ePvAccessMaster, &(this->aCamera));
+    
+    if( nullptr == this->aCamera ) throw "camera open error.";
+    
+    SetupLoad(this->aCamera, paramFilePath.c_str());
+    
+    char buf[256];
+    int _width, _height;
+    
+    Value2String(this->aCamera, "Width", tPvDatatype::ePvDatatypeInt64, buf, 256);
+    _width = atoi(buf);
+    Value2String(this->aCamera, "Height", tPvDatatype::ePvDatatypeInt64, buf, 256);
+    _height = atoi(buf);
+    
+    if( _width * _height != this->nPix() ){
+        delete this->data;
+        this->data = new unsigned short[_width*_height];
+    }
+    
+    if( _width != this->width ) *const_cast<int*>(&this->width) = _width;
+    if( _height != this->height ) *const_cast<int*>(&this->height) = _height;
+    
+}
+
+AVTCamera::~AVTCamera(){
+    
+    
+    
+}

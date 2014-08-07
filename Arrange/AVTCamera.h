@@ -10,14 +10,17 @@
 #define Arrange_AVTCamera_h
 
 #include "IO.h"
+#include "PvApi.h"
 
 namespace MLARR {
     
     namespace IO {
     
         class AVTCamera : public ICamera<unsigned short>{
+        protected:
+            tPvHandle aCamera;
         public:
-            AVTCamera( const std::string& paramFilePath);
+            AVTCamera( const std::string& ip, const std::string& paramFilePath);
             ~AVTCamera(void);
         };
     }
