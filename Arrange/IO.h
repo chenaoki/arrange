@@ -173,8 +173,7 @@ namespace MLARR{
 				}
 			};
 			~GrayColorMap(void){};
-		} colMap_gray;
-
+		};
 		class OrangeColorMap : public ColorMap
 		{
 		public:
@@ -220,7 +219,8 @@ namespace MLARR{
 				}
 			};
 			~OrangeColorMap(void){};
-		} colMap_orange;
+		};
+        extern OrangeColorMap colMap_orange;
 
 		class HSVColorMap : public ColorMap
 		{
@@ -233,10 +233,12 @@ namespace MLARR{
 				}
 			};
 			~HSVColorMap(void){};
-		} colMap_hsv;
-
-
-
+		};
+        
+        extern HSVColorMap colMap_hsv;
+        extern OrangeColorMap colMap_orange;
+        extern GrayColorMap colMap_gray;
+        
 
 		template<class T> class Dumper
 		{
