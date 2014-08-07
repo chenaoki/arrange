@@ -14,14 +14,14 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifndef _OSX_
+#ifndef _OSX
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <Winsock2.h>
 #include "XGetopt.h"
 #endif
 
-#ifdef _OSX_
+#ifdef _OSX
 #define strncpy_s(dest,len,src,count) strncpy(dest,src,count)
 #define sprintf_s(dest,len,format,args...) sprintf(dest,format,args)
 #define sscanf_s sscanf
@@ -38,7 +38,7 @@
 #include <strings.h>
 #endif
 
-//#include "PvApi.h"
+#include "PvApi.h"
 
 
 

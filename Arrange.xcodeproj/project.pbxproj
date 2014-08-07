@@ -68,8 +68,8 @@
 		66556B241966D1F600AF8E8F /* libboost_wserialization.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556AEE1966D1F500AF8E8F /* libboost_wserialization.a */; };
 		66556B251966D1F600AF8E8F /* libboost_wserialization.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556AEF1966D1F500AF8E8F /* libboost_wserialization.dylib */; };
 		66556B2F1966D8D800AF8E8F /* coefs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66556B2C1966D8D800AF8E8F /* coefs.cpp */; };
-		66D5C9AD19934F2F00171BA3 /* IO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66D5C9AC19934F2F00171BA3 /* IO.cpp */; };
 		66D5C9A719931EB200171BA3 /* AVTCamera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66D5C9A619931EB200171BA3 /* AVTCamera.cpp */; };
+		66D5C9AD19934F2F00171BA3 /* IO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66D5C9AC19934F2F00171BA3 /* IO.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -160,12 +160,12 @@
 		66556B2E1966D8D800AF8E8F /* IO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO.h; sourceTree = "<group>"; };
 		66556B301966D8FC00AF8E8F /* VectorAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VectorAnalyzer.h; sourceTree = "<group>"; };
 		66660B3F198FD69000AA108F /* Optical.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Optical.h; sourceTree = "<group>"; };
-		66D5C9AC19934F2F00171BA3 /* IO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IO.cpp; sourceTree = "<group>"; };
 		669CF12819931DEF00A60095 /* AVTCamera.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AVTCamera.h; sourceTree = "<group>"; };
 		66D5C9A619931EB200171BA3 /* AVTCamera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AVTCamera.cpp; sourceTree = "<group>"; };
 		66D5C9A8199321E700171BA3 /* ImageLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLib.h; sourceTree = "<group>"; };
 		66D5C9A9199321E700171BA3 /* PvApi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PvApi.h; sourceTree = "<group>"; };
 		66D5C9AA199321E700171BA3 /* PvRegIo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PvRegIo.h; sourceTree = "<group>"; };
+		66D5C9AC19934F2F00171BA3 /* IO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IO.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -447,6 +447,11 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					_OSX,
+					_x64,
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS[sdk=macosx*][arch=x86_64]" = (
+					_x64,
+					_OSX,
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -482,7 +487,14 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
-				GCC_PREPROCESSOR_DEFINITIONS = _OSX;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					_OSX,
+					_x64,
+				);
+				"GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS[sdk=macosx*][arch=x86_64]" = (
+					_x64,
+					_OSX,
+				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
