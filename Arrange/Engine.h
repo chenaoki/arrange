@@ -362,7 +362,7 @@ namespace MLARR{
                 MLARR::Analyzer::MedianFilter<double> imgMed( dynamic_cast<Image<double>&>(camPhase), psp_medianSize);
                 MLARR::Analyzer::PhaseSpacialFilter<double> imgFil( dynamic_cast<Image<double>&>(imgMed), 5,5, MLARR::Analyzer::coefficients.vec_gaussian_5x5 );
                 MLARR::Analyzer::AdjPhaseSingularityAnalyzer<double> imgPS(dynamic_cast<Image<double>&>(imgFil));
-                MLARR::Analyzer::PyramidDetector< double, unsigned char, AdjPhaseSingularityAnalyzer<double>> imgPyrPS( imgFil, &imgPS, 3 );
+                MLARR::Analyzer::PyramidDetector< double, unsigned char, AdjPhaseSingularityAnalyzer<double> > imgPyrPS( imgFil, &imgPS, 3 );
                 
                 
                 MLARR::Analyzer::MorphImage<unsigned char> imgOpenPS( imgPyrPS, psp_openPS );
@@ -420,7 +420,7 @@ namespace MLARR{
 
                     ofs << camPhase.getTime() << "," ;
                     
-                    std::vector<MLARR::Basic::Point<double>>::iterator it = imgLabel.vec_ps.begin();
+                    std::vector<MLARR::Basic::Point<double> >::iterator it = imgLabel.vec_ps.begin();
                     while( it != imgLabel.vec_ps.end() ){
                         disp_opt.drawRect(
                             static_cast<int>(it->getX() - 2)*hbt_compRate,

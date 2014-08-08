@@ -343,9 +343,9 @@ AVTCamera::AVTCamera(const std::string& ip, const std::string& paramFilePath)
     char buf[256];
     int _width, _height;
     
-    Value2String(this->aCamera, "Width", tPvDatatype::ePvDatatypeInt64, buf, 256);
+    //Value2String(this->aCamera, "Width", tPvDatatype::ePvDatatypeInt64, buf, 256);
     _width = atoi(buf);
-    Value2String(this->aCamera, "Height", tPvDatatype::ePvDatatypeInt64, buf, 256);
+    //Value2String(this->aCamera, "Height", tPvDatatype::ePvDatatypeInt64, buf, 256);
     _height = atoi(buf);
     
     if( _width * _height != this->nPix() ){

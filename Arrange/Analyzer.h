@@ -451,11 +451,11 @@ namespace MLARR{
                     }
                 }
                 
-                std::map<int, std::vector<MLARR::Basic::Point<int>>>::iterator it;
+                std::map<int, std::vector<MLARR::Basic::Point<int> > >::iterator it;
                 for( it = this->map_cluster.begin(); it != map_cluster.end(); it++){
                     MLARR::Basic::Point<int> sum(0,0);
                     MLARR::Basic::Point<double> mean(0,0);
-                    std::vector<MLARR::Basic::Point<int>>::iterator v;
+                    std::vector<MLARR::Basic::Point<int> >::iterator v;
                     for( v = it->second.begin(); v != it->second.end(); v++ ){
                         sum = sum + *v;
                     }

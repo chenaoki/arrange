@@ -72,7 +72,7 @@ namespace MLARR{
 								/* Stabilize signal */
 								srcVec.clear();
 								srcStab.clear();
-								typename std::vector<Image<T>>::iterator it_img = this->srcImgBuf.begin();
+								typename std::vector<Image<T> >::iterator it_img = this->srcImgBuf.begin();
 								for( it_img = this->srcImgBuf.begin(); it_img != this->srcImgBuf.end(); it_img++){
 									srcVec.push_back( *(it_img->getRef(w, h)));
 								}
@@ -85,7 +85,7 @@ namespace MLARR{
 								/* Hilbert Filtering */
 								HilbertFilter<double, MLARR::Analyzer::Coeffs::HILBERT_ORDER> hilbert(MLARR::Analyzer::Coeffs::HILBERT_COEFS);
 								std::vector<double>::iterator it_vec = srcStab.begin();
-								std::vector<Image<double>>::iterator it_imgOut = this->outImgBuf.begin();
+								std::vector<Image<double> >::iterator it_imgOut = this->outImgBuf.begin();
 								for( ; it_vec != srcStab.end(); it_vec++){
 									double y_real, y_im;
 									hilbert.execute( *it_vec, y_real, y_im );

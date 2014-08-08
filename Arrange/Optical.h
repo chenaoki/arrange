@@ -120,7 +120,7 @@ namespace MLARR{
 		class SimplePhaseAnalyzer : public ImageAnalyzer<T, char>{
 		public:
 			std::vector<double> coef;
-			std::vector<MLARR::Basic::Image<T>> buffer;
+			std::vector<MLARR::Basic::Image<T> > buffer;
 			MLARR::Basic::Image<char> img_sign;
 			enum EPhase{unknown = 0, downstroke, peak, upstroke, bottom};
 		public:
