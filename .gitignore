@@ -1,3 +1,5 @@
 DerivedData/*
 .DS_Store
 Arrange.xcodeproj/project.xcworkspace/xcuserdata/*
+Arrange/Arrange
+Arrange/obj/*
