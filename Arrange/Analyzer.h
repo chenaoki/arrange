@@ -469,23 +469,23 @@ namespace MLARR{
         
 
         
-        template< typename T_IN, typename T_OUT, class ANALYZER>
+        template< typename T_IN, class SHRINKER, class ANALYZER>
         class PyramidDetector : public ImageAnalyzer< T_IN, unsigned char >{
         public:
             int pyrNum;
-            std::vector< ImageShrinker<T_IN>* > vec_shrinker;
+            std::vector< SHRINKER* > vec_shrinker;
             std::vector< ANALYZER* > vec_analyzer;
         protected:
         public:
             explicit PyramidDetector(MLARR::Basic::Image<T_IN>& _src, ANALYZER* root, int _pyrNum)
-            : ImageAnalyzer<T_IN, T_OUT>( _src.height, _src.width, 0, _src ), pyrNum(_pyrNum){
+            : ImageAnalyzer<T_IN, unsigned char>( _src.height, _src.width, 0, _src ), pyrNum(_pyrNum){
                 int c = 0;
                 vec_analyzer.push_back(root);
                 while( c++ < pyrNum - 1 ){
                     if( vec_shrinker.size() ){
-                        vec_shrinker.push_back( new ImageShrinker<T_IN>(*(dynamic_cast<MLARR::Basic::Image<T_IN>*>(vec_shrinker.back()))));
+                        vec_shrinker.push_back( new SHRINKER(*(dynamic_cast<MLARR::Basic::Image<T_IN>*>(vec_shrinker.back()))));
                     }else{
-                        vec_shrinker.push_back( new ImageShrinker<T_IN>(_src) );
+                        vec_shrinker.push_back( new SHRINKER(_src) );
                     }
                     vec_analyzer.push_back(
                            new ANALYZER(
@@ -529,7 +529,7 @@ namespace MLARR{
                 }
                 vec_analyzer[0]->execute();
                 
-                *dynamic_cast<Image<T_OUT>*>(this) = *dynamic_cast<Image<T_OUT>*>(vec_analyzer[0]);
+                *dynamic_cast<Image<unsigned char>*>(this) = *dynamic_cast<Image<unsigned char>*>(vec_analyzer[0]);
                 
                 /* merge binary results */
                 /*

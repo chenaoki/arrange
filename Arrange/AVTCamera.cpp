@@ -49,6 +49,8 @@ static const int default_camWidth = 640;
 static const int default_camHeight = 480;
 static const int default_fps = 200;
 
+# ifdef USE_AVT_CAM
+
 #if defined(_LINUX) || defined(_QNX) || defined(_OSX)
 // put the calling thread to sleep for a given amount of millisecond
 void Sleep(unsigned int time)
@@ -328,9 +330,12 @@ bool SetupSave(tPvHandle aCamera,const char* aFile)
         return false;
 }
 
+#endif
 
 AVTCamera::AVTCamera(const std::string& ip, const std::string& paramFilePath)
 : ICamera<unsigned short>(default_camWidth, default_camHeight, camBit, default_fps), aCamera(nullptr){
+    
+#ifdef USE_AVT_CAM
     
     unsigned long addr = inet_addr(ip.c_str());
     
@@ -356,10 +361,8 @@ AVTCamera::AVTCamera(const std::string& ip, const std::string& paramFilePath)
     if( _width != this->width ) *const_cast<int*>(&this->width) = _width;
     if( _height != this->height ) *const_cast<int*>(&this->height) = _height;
     
+#endif
+    
 }
 
-AVTCamera::~AVTCamera(){
-    
-    
-    
-}
+AVTCamera::~AVTCamera(){}

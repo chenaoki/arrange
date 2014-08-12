@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		66556AAA1966CE1200AF8E8F /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66556AA91966CE1200AF8E8F /* main.cpp */; };
+		660E55311997A0C900EFD371 /* Arrange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 660E55301997A0C900EFD371 /* Arrange.cpp */; };
 		66556AAC1966CE1200AF8E8F /* Arrange.1 in Copy Files */ = {isa = PBXBuildFile; fileRef = 66556AAB1966CE1200AF8E8F /* Arrange.1 */; };
 		66556AB61966D1DB00AF8E8F /* libavdevice.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556AB21966D1DB00AF8E8F /* libavdevice.a */; };
 		66556AB71966D1DB00AF8E8F /* libopencv_core.2.4.9.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556AB31966D1DB00AF8E8F /* libopencv_core.2.4.9.dylib */; };
@@ -87,9 +87,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		660E55301997A0C900EFD371 /* Arrange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Arrange.cpp; sourceTree = "<group>"; };
+		660E55321997A71B00EFD371 /* FeedbackEngine.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = FeedbackEngine.hpp; sourceTree = "<group>"; };
 		66460F7E198B892F004C73FC /* picojson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = picojson.h; sourceTree = "<group>"; };
 		66556AA61966CE1200AF8E8F /* Arrange */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Arrange; sourceTree = BUILT_PRODUCTS_DIR; };
-		66556AA91966CE1200AF8E8F /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		66556AAB1966CE1200AF8E8F /* Arrange.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = Arrange.1; sourceTree = "<group>"; };
 		66556AB21966D1DB00AF8E8F /* libavdevice.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavdevice.a; path = /opt/local/lib/libavdevice.a; sourceTree = "<absolute>"; };
 		66556AB31966D1DB00AF8E8F /* libopencv_core.2.4.9.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_core.2.4.9.dylib; path = /opt/local/lib/libopencv_core.2.4.9.dylib; sourceTree = "<absolute>"; };
@@ -258,7 +259,7 @@
 		66556AA81966CE1200AF8E8F /* Arrange */ = {
 			isa = PBXGroup;
 			children = (
-				66660B3F198FD69000AA108F /* Optical.h */,
+				660E55301997A0C900EFD371 /* Arrange.cpp */,
 				66460F7E198B892F004C73FC /* picojson.h */,
 				66556B301966D8FC00AF8E8F /* VectorAnalyzer.h */,
 				66556B2D1966D8D800AF8E8F /* coefs.h */,
@@ -266,10 +267,11 @@
 				66556B2B1966D71900AF8E8F /* MovieAnalyzer.h */,
 				66556B2A1966D6DE00AF8E8F /* Analyzer.h */,
 				66556B291966D61300AF8E8F /* Engine.h */,
+				660E55321997A71B00EFD371 /* FeedbackEngine.hpp */,
 				66556B271966D44700AF8E8F /* Basic.h */,
 				66556B281966D44700AF8E8F /* Electrode.h */,
+				66660B3F198FD69000AA108F /* Optical.h */,
 				66556B261966D35B00AF8E8F /* stdafx.h */,
-				66556AA91966CE1200AF8E8F /* main.cpp */,
 				66556B2C1966D8D800AF8E8F /* coefs.cpp */,
 				66D5C9AC19934F2F00171BA3 /* IO.cpp */,
 				66556AAB1966CE1200AF8E8F /* Arrange.1 */,
@@ -413,10 +415,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				660E55311997A0C900EFD371 /* Arrange.cpp in Sources */,
 				66D5C9A719931EB200171BA3 /* AVTCamera.cpp in Sources */,
 				66556B2F1966D8D800AF8E8F /* coefs.cpp in Sources */,
 				66D5C9AD19934F2F00171BA3 /* IO.cpp in Sources */,
-				66556AAA1966CE1200AF8E8F /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
