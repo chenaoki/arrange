@@ -16,7 +16,7 @@ namespace MLARR{
 		enum ECamState{ standby, run, stop, error };
 
 		enum EColor{ white = 0, black, red, geen, blue };
-		
+        
 		const cv::Scalar arrColor[5] = {
 			cv::Scalar(255,255,255),
 			cv::Scalar(0,0,0),
@@ -25,11 +25,13 @@ namespace MLARR{
 			cv::Scalar(200,0,0)
 		};
 
+        picojson::object loadJsonParam(const std::string& paramFilePath);
+
 		template<class T> class ICamera : public Image<T>
 		{
 		public:
-			const size_t bits;
-			const double fps;
+			size_t bits;
+			double fps;
 			int state;
 			int f_tmp;
 			int f_next;
@@ -38,7 +40,7 @@ namespace MLARR{
 			ICamera<T>( int imgWidth, int imgHeight, size_t _bits, double _fps ) 
 				: Image<T>( imgWidth, imgHeight, static_cast<T>(0) ), bits(_bits), fps(_fps), state( standby ), f_tmp(0), f_next(1), msec(0){
 			};
-			~ICamera(void){};
+			virtual ~ICamera(void){};
 			const int& getTime( void ){
 				msec = static_cast<int>( this->f_tmp * 1000 / static_cast<double>(this->fps));
 				return msec;
@@ -64,6 +66,7 @@ namespace MLARR{
 		public:
 			RawFileCamera( int imgWidth, int imgHeight, size_t _bits, double _fps, const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop ) 
 				: ICamera<T>( imgWidth, imgHeight, _bits, _fps), dirPath(_dirPath), format(_format), f_start(_f_start), f_skip(_f_skip), f_stop(_f_stop){
+                    
 					this->f_tmp = f_start;
 			};
 			virtual ~RawFileCamera(void){};
@@ -132,22 +135,6 @@ namespace MLARR{
 			};
 		};
         
-        template<class T>
-        class RawFileCameraFactory{
-        public:
-            static MLARR::IO::RawFileCamera<T>* create( std::string camType, const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop){
-                RawFileCamera<T>* cam = NULL;
-                if("dalsa" == camType ){
-                    cam = new DalsaRawFileCamera( _dirPath, _format, _f_start, _f_skip, _f_stop);
-                }else if( "max" == camType ){
-                    cam = new MaxRawFileCamera( _dirPath, _format, _f_start, _f_skip, _f_stop );
-                }else{
-                    throw "unknown camera type";
-                }
-                return cam;
-            };
-        };
-
 		class ColorMap
 		{
 		protected:
@@ -469,8 +456,7 @@ namespace MLARR{
 			};
 		};
         */
-
-		
+        
 	}
 }
 

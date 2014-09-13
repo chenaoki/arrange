@@ -2,6 +2,8 @@
 
 #include "stdafx.h"
 
+using namespace std;
+
 namespace MLARR{
 
 	namespace Basic{
@@ -73,7 +75,7 @@ namespace MLARR{
 		/*------------------------------*/
 		template<class T> class Image
 		{
-		protected:
+		public:
 			T* data;
 		public:
 			const int height;
@@ -95,8 +97,8 @@ namespace MLARR{
 				this->data = new T[this->nPix()];
 				if( this->nPix() == src.size()) *this = src;
 			};
-			virtual ~Image(void){ 
-				delete this->data; 
+			virtual ~Image(void){
+				if( this->data ) delete this->data; 
 			};
 			Image<T>& operator=( const Image<T>& rhs ){
 				if( width == rhs.width && height == rhs.height ){
@@ -182,7 +184,6 @@ namespace MLARR{
 				return retImg;
 			};
 		};
-
-
+        
 	}
 }

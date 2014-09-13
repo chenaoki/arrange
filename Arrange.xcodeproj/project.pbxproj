@@ -89,6 +89,9 @@
 /* Begin PBXFileReference section */
 		660E55301997A0C900EFD371 /* Arrange.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Arrange.cpp; sourceTree = "<group>"; };
 		660E55321997A71B00EFD371 /* FeedbackEngine.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = FeedbackEngine.hpp; sourceTree = "<group>"; };
+		66333F2B19B7E976007B0A17 /* MultiStimSetupEngine.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = MultiStimSetupEngine.hpp; sourceTree = "<group>"; };
+		66333F2C19B7E9BD007B0A17 /* OpticalOfflineAnalysisEngine.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = OpticalOfflineAnalysisEngine.hpp; sourceTree = "<group>"; };
+		66333F2D19B89CF5007B0A17 /* ArduinoSerial.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = ArduinoSerial.hpp; sourceTree = "<group>"; };
 		66460F7E198B892F004C73FC /* picojson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = picojson.h; sourceTree = "<group>"; };
 		66556AA61966CE1200AF8E8F /* Arrange */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Arrange; sourceTree = BUILT_PRODUCTS_DIR; };
 		66556AAB1966CE1200AF8E8F /* Arrange.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = Arrange.1; sourceTree = "<group>"; };
@@ -162,6 +165,7 @@
 		66556B301966D8FC00AF8E8F /* VectorAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VectorAnalyzer.h; sourceTree = "<group>"; };
 		66660B3F198FD69000AA108F /* Optical.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Optical.h; sourceTree = "<group>"; };
 		669CF12819931DEF00A60095 /* AVTCamera.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AVTCamera.h; sourceTree = "<group>"; };
+		66C429EF19B071A60066D2E1 /* CameraFactory.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CameraFactory.hpp; sourceTree = "<group>"; };
 		66D5C9A619931EB200171BA3 /* AVTCamera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AVTCamera.cpp; sourceTree = "<group>"; };
 		66D5C9A8199321E700171BA3 /* ImageLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLib.h; sourceTree = "<group>"; };
 		66D5C9A9199321E700171BA3 /* PvApi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PvApi.h; sourceTree = "<group>"; };
@@ -241,9 +245,9 @@
 		66556A9D1966CE1200AF8E8F = {
 			isa = PBXGroup;
 			children = (
+				66556AA81966CE1200AF8E8F /* Arrange */,
 				66A18D37196A2CF400AAF6AF /* opencv */,
 				66A18D36196A2CBE00AAF6AF /* boost */,
-				66556AA81966CE1200AF8E8F /* Arrange */,
 				66556AA71966CE1200AF8E8F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -259,23 +263,10 @@
 		66556AA81966CE1200AF8E8F /* Arrange */ = {
 			isa = PBXGroup;
 			children = (
-				660E55301997A0C900EFD371 /* Arrange.cpp */,
-				66460F7E198B892F004C73FC /* picojson.h */,
-				66556B301966D8FC00AF8E8F /* VectorAnalyzer.h */,
-				66556B2D1966D8D800AF8E8F /* coefs.h */,
-				66556B2E1966D8D800AF8E8F /* IO.h */,
-				66556B2B1966D71900AF8E8F /* MovieAnalyzer.h */,
-				66556B2A1966D6DE00AF8E8F /* Analyzer.h */,
-				66556B291966D61300AF8E8F /* Engine.h */,
-				660E55321997A71B00EFD371 /* FeedbackEngine.hpp */,
-				66556B271966D44700AF8E8F /* Basic.h */,
-				66556B281966D44700AF8E8F /* Electrode.h */,
-				66660B3F198FD69000AA108F /* Optical.h */,
-				66556B261966D35B00AF8E8F /* stdafx.h */,
-				66556B2C1966D8D800AF8E8F /* coefs.cpp */,
-				66D5C9AC19934F2F00171BA3 /* IO.cpp */,
-				66556AAB1966CE1200AF8E8F /* Arrange.1 */,
-				66D5C9AB1993220800171BA3 /* AVTCamera */,
+				66C429F419B434D10066D2E1 /* Basic */,
+				66C429F319B4349A0066D2E1 /* Engine */,
+				66C429F219B434710066D2E1 /* Analyzer */,
+				66C429F019B4343E0066D2E1 /* IO */,
 			);
 			path = Arrange;
 			sourceTree = "<group>";
@@ -350,6 +341,55 @@
 				66556AB51966D1DB00AF8E8F /* libopencv_imgproc.2.4.9.dylib */,
 			);
 			name = opencv;
+			sourceTree = "<group>";
+		};
+		66C429F019B4343E0066D2E1 /* IO */ = {
+			isa = PBXGroup;
+			children = (
+				66D5C9AC19934F2F00171BA3 /* IO.cpp */,
+				66556B281966D44700AF8E8F /* Electrode.h */,
+				66333F2D19B89CF5007B0A17 /* ArduinoSerial.hpp */,
+				66556B2E1966D8D800AF8E8F /* IO.h */,
+				66C429EF19B071A60066D2E1 /* CameraFactory.hpp */,
+				66D5C9AB1993220800171BA3 /* AVTCamera */,
+			);
+			name = IO;
+			sourceTree = "<group>";
+		};
+		66C429F219B434710066D2E1 /* Analyzer */ = {
+			isa = PBXGroup;
+			children = (
+				66556B2C1966D8D800AF8E8F /* coefs.cpp */,
+				66556B2A1966D6DE00AF8E8F /* Analyzer.h */,
+				66660B3F198FD69000AA108F /* Optical.h */,
+				66556B2B1966D71900AF8E8F /* MovieAnalyzer.h */,
+				66556B301966D8FC00AF8E8F /* VectorAnalyzer.h */,
+			);
+			name = Analyzer;
+			sourceTree = "<group>";
+		};
+		66C429F319B4349A0066D2E1 /* Engine */ = {
+			isa = PBXGroup;
+			children = (
+				66556B291966D61300AF8E8F /* Engine.h */,
+				66333F2C19B7E9BD007B0A17 /* OpticalOfflineAnalysisEngine.hpp */,
+				660E55321997A71B00EFD371 /* FeedbackEngine.hpp */,
+				66333F2B19B7E976007B0A17 /* MultiStimSetupEngine.hpp */,
+			);
+			name = Engine;
+			sourceTree = "<group>";
+		};
+		66C429F419B434D10066D2E1 /* Basic */ = {
+			isa = PBXGroup;
+			children = (
+				66556B271966D44700AF8E8F /* Basic.h */,
+				66460F7E198B892F004C73FC /* picojson.h */,
+				66556B2D1966D8D800AF8E8F /* coefs.h */,
+				66556B261966D35B00AF8E8F /* stdafx.h */,
+				66556AAB1966CE1200AF8E8F /* Arrange.1 */,
+				660E55301997A0C900EFD371 /* Arrange.cpp */,
+			);
+			name = Basic;
 			sourceTree = "<group>";
 		};
 		66D5C9AB1993220800171BA3 /* AVTCamera */ = {

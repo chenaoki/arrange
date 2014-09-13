@@ -117,22 +117,25 @@ namespace MLARR{
 
         
         template<typename T>
-		class SimplePhaseAnalyzer : public ImageAnalyzer<T, char>{
+		class SimplePhaseAnalyzer : public ImageAnalyzer<T, unsigned char>{
 		public:
 			std::vector<double> coef;
 			std::vector<MLARR::Basic::Image<T> > buffer;
 			MLARR::Basic::Image<char> img_sign;
 			enum EPhase{unknown = 0, downstroke, peak, upstroke, bottom};
 		public:
+            
 			explicit SimplePhaseAnalyzer(MLARR::Basic::Image<T>& _srcImg, std::vector<double> _coef)
-            : ImageAnalyzer<T, char>(_srcImg.height, _srcImg.width, unknown, _srcImg), coef(_coef), buffer(), img_sign(_srcImg.height, _srcImg.width, 0){
+            : ImageAnalyzer<T, unsigned char>(_srcImg.height, _srcImg.width, unknown, _srcImg), coef(_coef), buffer(), img_sign(_srcImg.height, _srcImg.width, 0){
 			};
-			~SimplePhaseAnalyzer(void){
+			
+            ~SimplePhaseAnalyzer(void){
 				while( buffer.size() > 0){
                     this->buffer.erase(this->buffer.begin());
 				}
 			};
-			void execute(void){
+			
+            void execute(void){
 				
 				typename std::vector<MLARR::Basic::Image<T> >::iterator it_buf;
 				typename std::vector<double>::iterator it_coef;
@@ -169,14 +172,25 @@ namespace MLARR{
 		};
         
 		template <class T>
-		class SimplePhaseSingularityAnalyzer : public ImageAnalyzer<char, char>{
-		public:
-			explicit SimplePhaseSingularityAnalyzer( SimplePhaseAnalyzer<T>& _srcImg)
-            : ImageAnalyzer<char, char>( _srcImg.height, _srcImg.width, 0, dynamic_cast<MLARR::Basic::Image<char>&>(_srcImg)){
-			};
+		class SimplePhaseSingularityAnalyzer : public ImageAnalyzer<T, unsigned char>{
+        public:
+            SimplePhaseAnalyzer<T> imgSP;
+		
+        public:
+
+			explicit SimplePhaseSingularityAnalyzer( MLARR::Basic::Image<T>& _srcImg, std::vector<double> _coef)
+            : ImageAnalyzer<T, unsigned char>( _srcImg.height, _srcImg.width, 0, dynamic_cast<MLARR::Basic::Image<T>&>(_srcImg)), imgSP(_srcImg, _coef)
+            {};
+            
+            explicit SimplePhaseSingularityAnalyzer(MLARR::Basic::Image<T>& _srcImg, SimplePhaseSingularityAnalyzer<T>& pre)
+            : ImageAnalyzer<T, unsigned char>( _srcImg.height, _srcImg.width, 0, dynamic_cast<MLARR::Basic::Image<T>&>(_srcImg)), imgSP(_srcImg, pre.imgSP.coef)
+            {};
+            
 			~SimplePhaseSingularityAnalyzer(void){};
-			void execute(void){
+			
+            void execute(void){
 				this->clear(0);
+                imgSP.execute();
 				for( int h = 1; h < this->height - 1; h++){
 					for( int w = 1; w < this->width - 1; w++){
 						if( *(this->im_roi.getRef(w, h)) ){
@@ -184,7 +198,7 @@ namespace MLARR{
 							int flag[5] = {1,0,0,0,0};
 							for(int i = -1; i <=1 ; i++){
 								for(int j = -1; j <=1; j++){
-									char psVal = *this->srcImg.getRef(w+i, h+j);
+									char psVal = *this->imgSP.getRef(w+i, h+j);
 									if( psVal >= 0 && psVal <= 4){
 										flag[psVal] = 1;
 									}

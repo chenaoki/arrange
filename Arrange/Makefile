@@ -17,7 +17,7 @@ OSXV	= -mmacosx-version-min=10.7
 #ARCH	= -m32
 
 # compilation flags
-OPT	= -O3 $(ARCH) $(OSXV) -stdlib=libc++
+OPT	= -O3 $(ARCH) $(OSXV) -stdlib=libc++ 
 
 # compiler version
 #CVER    = 4.2
@@ -64,7 +64,7 @@ CFLAGS	= $(OPT) $(FLAGS) -Wall -I$(BST_INC_DIR) -D_REENTRANT $(EXTRA) $(CV_LIB)
 EXE	= Arrange
 
 ## Other Objects
-OBJS = $(OBJ_DIR)/IO.o $(OBJ_DIR)/coefs.o
+OBJS = $(OBJ_DIR)/IO.o $(OBJ_DIR)/coefs.o $(OBJ_DIR)/AVTCamera.o $(OBJ_DIR)/Lock.o
     
 sample : $(EXE).cpp $(OBJS)
 	$(CC) $(RPATH) $(TARGET) $(CFLAGS) $(EXE).cpp -o $(EXE) $(SOLIB) $(PVLIB) $(BST_SALIB) $(OBJS)
