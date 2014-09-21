@@ -24,8 +24,15 @@ namespace MLARR{
         
         /* convert phase value to be in range from -PI to PI */
         inline double phaseComplement(double x){
-            int pos = static_cast<int>( x / M_PI);
+            int pos = static_cast<int>( ( x + M_PI ) / (2 * M_PI) );
             return x - pos * 2 * M_PI;
+        };
+        
+        inline double phaseAbsDiff(double x, double y){
+            double diff = abs(x - y);
+            diff = phaseComplement(diff - M_PI ) + M_PI;
+            diff = diff < ( 2 * M_PI - diff ) ? diff : ( 2 * M_PI - diff );
+            return diff;
         };
         
 		template<class T>
@@ -71,6 +78,7 @@ namespace MLARR{
 				}
 			};
 		};
+        
         
         template<class T>
         class PhaseSpacialFilter : public SpacialFilter<T>{
@@ -337,6 +345,31 @@ namespace MLARR{
                             if( flag[0] + flag[1] + flag[2] + flag[3] >= 3 ){
                                 this->setValue(w_c, h_c, 1);
                             }
+                        }
+                    }
+                }
+            };
+        };
+        
+        template <class T>
+        class PhaseRangeDetector : public ImageAnalyzer<T, unsigned char>
+        {
+        protected:
+            T _mean;
+            T _range;
+        public:
+            explicit PhaseRangeDetector( MLARR::Basic::Image<T>& _src, T mean, T range)
+            :ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), _mean(mean), _range(range)
+            {};
+            ~PhaseRangeDetector(void){};
+        public:
+            void execute(void){
+                this->clear();
+                for( int h = 0; h < this->height; h++){
+					for( int w = 0; w < this->width; w++){
+                        if( *(this->im_roi.getRef(w, h)) ){
+                            double p = *(this->srcImg.getRef(w, h));
+                            this->setValue( w, h, phaseAbsDiff(p, _mean) < _range ? 1 : 0 );
                         }
                     }
                 }

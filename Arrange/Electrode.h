@@ -10,7 +10,7 @@ namespace MLARR{
 
 		class Electrode : public MLARR::Basic::Point<int>
 		{
-		private:
+		protected:
 			int id;
 
 		public:
@@ -18,34 +18,54 @@ namespace MLARR{
             : MLARR::Basic::Point<int>(_posX, _posY), id(_id){};
 			virtual ~Electrode(void){};
 			
-			const int& getID(void){ return id; };
-
 		public:
-			
-			static void loadElectrodeSetting( std::string& path, std::vector<Electrode>& dst ){
-				using namespace std;
-				string line;
-				ifstream ifs(path.c_str());
-				if( ifs ){
-					while( !ifs.eof() ){
-						if( std::getline( ifs, line ) ){
-							vector<string> v;
-							boost::algorithm::split( v, line, boost::algorithm::is_space() );
-							if( v.size() == 7 ){
-								dst.push_back( Electrode( 
-									atoi(v[0].c_str()), 
-									atoi(v[1].c_str()), 
-									atoi(v[2].c_str())
-								));
-							}
-						}
-					}
-				}
-				return;
-
-			};
-
+			int getID(void) const{ return id; };
+            
 		};
+        
+        class ActivationMonitorElectrode : public Electrode
+        {
+        protected:
+            int lastPastTime;
+            int pastTime;
+            const int minPeakDist;
+            double filVal;
+            double thre;
+            std::vector<double> actBuf;
+            std::vector<double> vecCoeff;
+
+        public:
+			ActivationMonitorElectrode(int _id, int _posX, int _posY, std::vector<double> _vecCoeff, double threshold, int minPeakDistance )
+            : Electrode(_id, _posX, _posY), lastPastTime(-minPeakDistance), pastTime(0), minPeakDist(minPeakDistance), thre(threshold), filVal(0.0), vecCoeff(_vecCoeff), actBuf(){};
+            
+            ActivationMonitorElectrode( const Electrode& elec, std::vector<double> _vecCoeff, double threshold, int minPeakDistance )
+            : Electrode( elec.getID(), elec.getX(), elec.getY()), lastPastTime(-minPeakDistance), pastTime(0), minPeakDist(minPeakDistance), thre(threshold), filVal(0.0), vecCoeff(_vecCoeff), actBuf(){};
+            
+			virtual ~ActivationMonitorElectrode(void){};
+			
+        public:
+			int getPastTime(void){ return pastTime; };
+            double getFilteredValue(void){ return filVal; }
+            void monitor(int msec, double actValue)
+            {
+                actBuf.push_back(actValue);
+                while( actBuf.size() > vecCoeff.size() ){
+                    actBuf.erase(actBuf.begin());
+                }
+                filVal = 0.0;
+                if(  actBuf.size() == vecCoeff.size() ){
+                    for( int i = 0; i < actBuf.size(); i++){
+                        filVal += actBuf[i] * vecCoeff[i];
+                    }
+                }
+                if( filVal > thre && msec > lastPastTime + minPeakDist){
+                    lastPastTime = msec;
+                }
+                if( lastPastTime > 0 ) pastTime = msec - lastPastTime;
+                return;
+            };
+            
+        };
 
 	}
 }

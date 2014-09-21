@@ -19,7 +19,7 @@ picojson::object MLARR::IO::loadJsonParam(const std::string& paramFilePath){
     
     std::ifstream ifs(paramFilePath.c_str());
     if( !ifs.is_open() ){
-        throw "failed to open parameter file.";
+        throw string("failed to open parameter file.");
     }
     char* buf = new char[1024];
     std::string str_json("");

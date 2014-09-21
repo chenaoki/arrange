@@ -59,11 +59,11 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-e mssetup"
+            argument = "-e optical"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-p /usr/local/tmp/sampleMSSetupParam.json"
+            argument = "-p /usr/local/tmp/ArrangeParam.json"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

@@ -359,7 +359,6 @@
 		66C429F219B434710066D2E1 /* Analyzer */ = {
 			isa = PBXGroup;
 			children = (
-				66556B2C1966D8D800AF8E8F /* coefs.cpp */,
 				66556B2A1966D6DE00AF8E8F /* Analyzer.h */,
 				66660B3F198FD69000AA108F /* Optical.h */,
 				66556B2B1966D71900AF8E8F /* MovieAnalyzer.h */,
@@ -387,6 +386,7 @@
 				66556B2D1966D8D800AF8E8F /* coefs.h */,
 				66556B261966D35B00AF8E8F /* stdafx.h */,
 				66556AAB1966CE1200AF8E8F /* Arrange.1 */,
+				66556B2C1966D8D800AF8E8F /* coefs.cpp */,
 				660E55301997A0C900EFD371 /* Arrange.cpp */,
 			);
 			name = Basic;

@@ -11,6 +11,9 @@ CPU	    = x64
 OS	    = OSX
 OS_DIR  = OSX
 
+# Install target
+BIN_DIR = /usr/local/bin
+
 # OS-X version
 OSXV	= -mmacosx-version-min=10.7
 # architecture flags

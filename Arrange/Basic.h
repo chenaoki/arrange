@@ -19,8 +19,8 @@ namespace MLARR{
 			Point(const Point& rhs ) : x( rhs.x ), y( rhs.y ){};
 			virtual ~Point(void){};
 
-			const T& getX(void){ return x; };
-			const T& getY(void){ return y; };
+			T getX(void) const { return x; };
+			T getY(void) const { return y; };
 			void setX(const T& _x){ x = _x; return; };
 			void setY(const T& _y){ y = _y; return; };
 

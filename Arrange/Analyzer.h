@@ -325,6 +325,42 @@ namespace MLARR{
 				}
 			};
 		};
+        
+        template <class T>
+		class BinaryAdjacent : public ImageAnalyzer<T, T>{
+		private:
+			const MLARR::Basic::Image<T>& cmpImg;
+			const T thre;
+            const int winSize;
+		public:
+			explicit BinaryAdjacent( MLARR::Basic::Image<T>& _srcImg, const MLARR::Basic::Image<T>& _cmpImg, int _winSize, T _thre = 0 )
+            : ImageAnalyzer<T, T>( _srcImg.height, _srcImg.width, 0, _srcImg), cmpImg(_cmpImg), winSize(_winSize), thre(_thre){
+                if( _srcImg.width != _cmpImg.width || _srcImg.height != _cmpImg.height ){
+                    throw "error : comparison image have invalid size.";
+                }
+			};
+			~BinaryAdjacent(void){};
+			void execute(void){
+				for( int h = 0; h <= this->height - winSize; h++){
+					for( int w = 0; w <= this->width - winSize; w++){
+                        int h_c = h + ( winSize - 1 )/2;
+                        int w_c = w + ( winSize - 1 )/2;
+						if( *(this->im_roi.getRef(w_c, h_c)) ){
+                            int cntSrc = 0;
+                            int cntCmp = 0;
+                            for( int i = 0; i < winSize; i++){
+								for( int j = 0; j < winSize; j++){
+									cntSrc += *(this->srcImg.getRef(w_c + i, h_c + j)) > thre ? 1 : 0;
+									cntCmp += *(this->cmpImg.getRef(w_c + i, h_c + j)) > thre ? 1 : 0;
+                                }
+							}
+                            this->setValue(w_c, h_c, ( cntSrc && cntCmp ) ? 1 : 0);
+                        }
+					}
+				}
+			};
+		};
+
 
 		template<class T>
 		class SpacialFilter : public ImageAnalyzer<T, T>{

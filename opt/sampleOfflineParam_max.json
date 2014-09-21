@@ -1,16 +1,21 @@
 {
-	"camType" : "avt",
-	"camParamFile":"/usr/local/opt/AVTCamera_feedback.opt",
-	"dstDir" : "/usr/local/tmp/ExperimentData/20140912-1/5",
-	"format" : "%s/C001S0005%06d.raww",
-	"frame" : {
-		"start":1, 
-		"skip":1,
-		"stop":500
+	"dstDir" : "/usr/local/tmp/AnalysisResult/20111214-3/C001S0011",
+	
+	"camType" : "raw_max",
+	"rawCamera" : {
+		"srcDir" : "/usr/local/tmp/ExperimentData/20111214-3/C001S0011",
+		"format" : "%s/c001s0011%06d.raww",
+		"size" : 512,
+		"frameRate" : 1000,
+		"frame" : {
+			"start":1, 
+			"skip":1,
+			"stop":2000
+		}
 	},
 	
 	"opticalOffline" : {
-		"menu" : [ "full"], 
+		"menu" : [ "monitor"], 
 		"electrode" : [
 			{ "id" : 1, "x" : 292, "y" : 248 }, 
 			{ "id" : 2, "x" : 176, "y" : 296 }, 
@@ -31,7 +36,7 @@
 			"closeRoi" : 13,
 			"openPS" : 1,
 			"medianFilterSize" : 5,
-			"divSize" : 5,
+			"divSize" : 3,
 			"divThre" : 0.05,
 			"roiMargin" : {
 				"top"    : 0.4,

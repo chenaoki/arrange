@@ -6,6 +6,7 @@
 #include "stdafx.h"
 #include "Basic.h"
 #include "coefs.h"
+#include "IO.h"
 
 using namespace MLARR::Basic;
 
@@ -15,7 +16,7 @@ namespace MLARR{
 
 		enum ECamState{ standby, run, stop, error };
 
-		enum EColor{ white = 0, black, red, geen, blue };
+		enum EColor{ white = 0, black, red, green, blue };
         
 		const cv::Scalar arrColor[5] = {
 			cv::Scalar(255,255,255),
@@ -111,8 +112,8 @@ namespace MLARR{
 
 		class DalsaRawFileCamera : public RawFileCamera<unsigned short>{
 		public:
-			DalsaRawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop ) 
-				: RawFileCamera<unsigned short>( 128, 128, 12, 500, _dirPath, _format, _f_start, _f_skip, _f_stop ){
+			DalsaRawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size = 128, int _fps = 500 )
+				: RawFileCamera<unsigned short>( _size, _size, 12, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop ){
 			};
 			~DalsaRawFileCamera(void){};
 		protected:
@@ -134,6 +135,31 @@ namespace MLARR{
 				dst = src;
 			};
 		};
+        
+        class SA4RawFileCamera : public RawFileCamera<unsigned short>{
+        public:
+            SA4RawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size = 512, int _fps = 1000 )
+            : RawFileCamera<unsigned short>( _size, _size, 12, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop )
+            {};
+            ~SA4RawFileCamera(void){};
+        protected:
+			void binaryTrans( const unsigned short& src, unsigned short& dst){
+				/* do nothing */
+				dst = src;
+			};
+        };
+        
+        class Mono8RawFileCamera : public RawFileCamera<unsigned char>{
+        public:
+            Mono8RawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size, int _fps ) : RawFileCamera<unsigned char>( _size, _size, 8, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop )
+            {};
+            ~Mono8RawFileCamera(void){};
+        protected:
+            void binaryTrans( const unsigned char& src, unsigned char& dst){
+				/* do nothing */
+				dst = src;
+			};
+        };
         
 		class ColorMap
 		{
@@ -320,6 +346,20 @@ namespace MLARR{
 				if( !flg_update ){ updateCVImage(); flg_update = 1; }
                 cv::rectangle(cv_img, cv::Point(left, top), cv::Point(right, bottom), arrColor[color]);
             }
+            void drawMask( const Image<unsigned char>& _mskImage, int color ){
+                if( !flg_update ){ updateCVImage(); flg_update = 1; }
+                cv::Vec3b pixVal;
+                pixVal[0] = arrColor[color].val[0];
+                pixVal[1] = arrColor[color].val[1];
+                pixVal[2] = arrColor[color].val[2];
+                for( int h = 0; h < _mskImage.height; h++){
+                    for( int w = 0; w < _mskImage.width; w++){
+                        if( *_mskImage.getRef(w, h) ){
+                            cv_img.at<cv::Vec3b>( h, w ) = pixVal;
+                        }
+                    }
+                }
+            };
 			void show(void){
 				if( !flg_update ) updateCVImage();
 				cv::imshow(winName, cv_img);
@@ -348,6 +388,7 @@ namespace MLARR{
 				cv::imwrite( path, cv_img);
 			};
 		};
+        
 
 		/*
         template< class T, class T_X > class PlotDisplay : public Display<unsigned char>

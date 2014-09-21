@@ -1,16 +1,21 @@
 {
-	"camType" : "raw_max",
-	"dirPath" : "/usr/local/tmp/ExperimentData/20111214-3/C001S0005",
-	"dstDir" : "/usr/local/tmp/AnalysisResult/20111214-3/C001S0005",
-	"format" : "%s/C001S0005%06d.raww",
-	"frame" : {
-		"start":1, 
-		"skip":1,
-		"stop":500
+	"dstDir" : "/usr/local/tmp/AnalysisResult",
+	
+	"camType" : "raw_avt",
+	"rawCamera" : {
+		"srcDir" : "/usr/local/tmp/ExperimentData/20140912-1/100fps",
+		"format" : "%s/%05d.raw",
+		"size" : 256,
+		"frameRate" : 100,
+		"frame" : {
+			"start":1, 
+			"skip":1,
+			"stop":200
+		}
 	},
 	
 	"opticalOffline" : {
-		"menu" : [ "full"], 
+		"menu" : [ "revnorm"], 
 		"electrode" : [
 			{ "id" : 1, "x" : 292, "y" : 248 }, 
 			{ "id" : 2, "x" : 176, "y" : 296 }, 
@@ -19,7 +24,7 @@
 			{ "id" : 5, "x" : 288, "y" : 396 }
 		],
 		"revNorm" : {
-			"minDelta" : 20
+			"minDelta" : 1
 		},
 		"hilbert" : {
 			"size" : 128,

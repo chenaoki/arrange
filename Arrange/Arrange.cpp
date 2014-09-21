@@ -31,6 +31,7 @@ int main(int argc, char* argv[])
 
     Engine *eng = nullptr;
     
+    
 	try{
 
         store( parse_command_line( argc, argv, options ) , values );
@@ -38,16 +39,25 @@ int main(int argc, char* argv[])
         
 		engine = values["engine"].as<string>();
         paramFile = values["param"].as<string>();
+        
 		if( engine == std::string("optical")) {
-			eng = dynamic_cast<Engine*>(new OpticalOfflineAnalysisEngine<unsigned short>(paramFile));
+            eng = dynamic_cast<Engine*>(new OpticalOfflineAnalysisEngine<unsigned short>(paramFile));
 		}else if( engine == string("feedback") ){
-			eng = dynamic_cast<Engine*>(new FeedbackEngine<unsigned char>(paramFile));
+            /* create camera object */
+            picojson::object obj = MLARR::IO::loadJsonParam(paramFile) ;
+            string camType = obj["camType"].get<std::string>();
+            if( camType == "avt" ){
+                eng = dynamic_cast<Engine*>(new FeedbackEngine<unsigned char>(paramFile));
+            }
         }else if( engine == string("mssetup")){
             eng = dynamic_cast<Engine*>(new MultiStimSetupEngine(paramFile));
         }else{
 			throw engine + string(" engine is not implemented yet.");
 		}
         
+        if( !eng ){
+            throw string("engine not created.");
+        }        
         eng->execute();
         
 	}catch( std::exception& e ){

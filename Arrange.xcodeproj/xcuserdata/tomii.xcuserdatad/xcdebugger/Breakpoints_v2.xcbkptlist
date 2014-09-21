@@ -23,13 +23,29 @@
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Arrange/MultiStimSetupEngine.hpp"
-            timestampString = "431697748.780506"
+            filePath = "Arrange/OpticalOfflineAnalysisEngine.hpp"
+            timestampString = "432876886.443801"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "149"
-            endingLineNumber = "149"
-            landmarkName = "send(void)"
+            startingLineNumber = "479"
+            endingLineNumber = "479"
+            landmarkName = "phaseSingularityAnalysis(void)"
+            landmarkType = "5">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Arrange/OpticalOfflineAnalysisEngine.hpp"
+            timestampString = "432876886.443801"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "497"
+            endingLineNumber = "497"
+            landmarkName = "phaseSingularityAnalysis(void)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
