@@ -2,10 +2,10 @@
 
 #include "stdafx.h"
 
-#include "basic.h"
-#include "io.h"
-#include "analyzer.h"
-#include "vectoranalyzer.h"
+#include "Basic.h"
+#include "IO.h"
+#include "Analyzer.h"
+#include "VectorAnalyzer.h"
 
 namespace MLARR{
 	namespace Analyzer{

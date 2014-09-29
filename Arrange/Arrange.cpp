@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
 
 	variables_map values;
 
-    Engine *eng = nullptr;
+    Engine *eng = NULL;
     
     
 	try{

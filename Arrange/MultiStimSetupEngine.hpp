@@ -26,6 +26,15 @@ using namespace MLARR::Engine;
 
 namespace MLARR{
 	namespace Engine{
+
+	typedef struct state{
+	    int numState;
+	    int cnt;
+	    bool on;
+	    bool sw;
+	    bool done;
+	} state;
+                
         
 		class MultiStimSetupEngine : public Engine{
         private:
@@ -95,14 +104,6 @@ namespace MLARR{
             };
             
             void send(void){
-                
-                typedef struct state{
-                    int numState;
-                    int cnt;
-                    bool on;
-                    bool sw;
-                    bool done;
-                } state;
                 
                 vector<state> vecState;
                 for( int i = 0; i < config.size();i++){

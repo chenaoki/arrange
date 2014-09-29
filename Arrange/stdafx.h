@@ -11,7 +11,6 @@
 #include <math.h>
 #include <typeinfo>
 #include <limits.h>
-#include <copyfile.h>
 #include <iterator>
 
 #include <vector>

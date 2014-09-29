@@ -2,8 +2,8 @@
 
 #include "stdafx.h"
 #include "coefs.h"
-#include "io.h"
-#include "analyzer.h"
+#include "IO.h"
+#include "Analyzer.h"
 
 namespace MLARR{
 

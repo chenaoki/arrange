@@ -78,8 +78,8 @@ namespace MLARR{
             {
                 
                 /* copy parameter file to the dst directory. */
-                ifstream ifs(paramFilePath);
-                ofstream ofs(this->dstDir+string("/param.json"));
+                ifstream ifs(paramFilePath.c_str());
+                ofstream ofs((this->dstDir+string("/param.json")).c_str());
                 ofs << ifs.rdbuf();
                 ifs.close(); ofs.close();
                 
@@ -236,7 +236,7 @@ namespace MLARR{
                     }
                     tmpWidth = vec_optComp.back()->width;
                 }
-                Image<double>* imgOpt = nullptr;
+                Image<double>* imgOpt = NULL;
                 if( !vec_optComp.size() ){
                     imgOpt = static_cast< Image<double>* >(&camOpt);
                 }else{
@@ -257,7 +257,7 @@ namespace MLARR{
                 
                 /* ROI setting */
                 camRoi.capture();
-                Image<unsigned char> *imgROI = nullptr;
+                Image<unsigned char> *imgROI = NULL;
                 if( vec_roiComp.size()){
                     for( vector< ImageShrinker<unsigned char>*>::iterator it = vec_roiComp.begin(); it != vec_roiComp.end(); it++ ){
                         (*it)->execute();
