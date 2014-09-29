@@ -3,36 +3,84 @@
 #include "stdafx.h"
 #include "coefs.h"
 #include "io.h"
+#include "analyzer.h"
 
 namespace MLARR{
 
 	namespace Analyzer{
-
-		template<typename T, int order> class HilbertFilter
-		{
-		private:
-			const T *const hm;
-			double xn[order+1]; // buffer
-		public:
-			HilbertFilter(const T hk[]) : hm(hk){ 
-				for (int k=0; k<=order; k++) xn[k] = 0.0; 
-			};
-			~HilbertFilter(void){};
-			inline void execute(const T xin, T &y_re, T &y_im){
-				double acc = 0.0;
-				xn[0] = xin;
-				for (int k=0; k<=order; k++) acc = acc + hm[k]*xn[k];
-				y_re = static_cast<T>(xn[order/2]);
-				y_im = static_cast<T>(acc);
-				for (int k=order; k>0; k--) xn[k] = xn[k-1]; // moving signal
-			};
-		};
-
+        
+        template <typename T>
+        class NotchFilter : public TimeSeriesFilter<T,unsigned char>{
+        protected:
+            T upThre;
+            T downThre;
+        public:
+            NotchFilter(void)
+            : TimeSeriesFilter<T, unsigned char>(0), upThre(0.2), downThre(0.8)
+            {};
+            NotchFilter(T _upThre, T _downThre, unsigned char init)
+            : TimeSeriesFilter<T, unsigned char>(init), upThre(_upThre), downThre(_downThre)
+            {};
+            NotchFilter(const NotchFilter<T>& rhs)
+            : TimeSeriesFilter<T, unsigned char>(rhs.ret), upThre(rhs._upThre), downThre(rhs._downThre)
+            {};
+            ~NotchFilter(void){};
+            NotchFilter<T>& operator=( const NotchFilter<T>& rhs ){
+                this->ret = rhs.ret;
+                this->upThre = rhs.upThre;
+                this->downThre = rhs.downThre;
+                this->buffer.clear();
+                return *this;
+            };
+            void update(T& temp){
+                this->buffer.push_back(temp);
+                
+                while( this->buffer.size() > 2) {
+                    this->buffer.erase(this->buffer.begin());
+                }
+                
+                if(this->buffer.size() == 2){
+                    if( this->ret == 0 ){
+                        if( this->buffer[0] < upThre && this->buffer[1] >= upThre){
+                            this->ret = 1;
+                        }
+                    }else{
+                        if( this->buffer[0] > downThre && this->buffer[1] <= downThre){
+                            this->ret = 0;
+                        }
+                    }
+                }
+            };
+            
+        };
+        
+        template <typename T>
+        class PositiveFilter : public TimeSeriesFilter<T, unsigned char>
+        {
+        public:
+            PositiveFilter(void)
+            : TimeSeriesFilter<T, unsigned char>(0)
+            {};
+            PositiveFilter(unsigned char init)
+            : TimeSeriesFilter<T, unsigned char>(init)
+            {};
+            PositiveFilter(const NotchFilter<T>& rhs)
+            : TimeSeriesFilter<T, unsigned char>(rhs.ret)
+            {};
+            ~PositiveFilter(void){};
+            PositiveFilter<T>& operator=( const PositiveFilter<T>& rhs ){
+                this->ret = rhs.ret;
+                this->buffer.clear();
+                return *this;
+            };
+            void update(T& temp){
+                this->ret = temp > 0 ? 1 : 0;
+            };
+        };
+        
 		template<class T>
 		class VectorAnalyzeFuncs{
-		private:
-			VectorAnalyzeFuncs<T>(void);
-			~VectorAnalyzeFuncs<T>(void);
+
 		public:
 
 			static void movingAveragefilter( const std::vector<T>& src, const int filterSize, std::vector<T>& dst ){
@@ -77,29 +125,6 @@ namespace MLARR{
 				std::map<int, T> minMap;
 
 				dst.clear();
-
-				/*plot*/
-				//Image<T> imgVec_src(src, 1, src.size());
-				//Image<T> imgVec_fil(filSrc, 1, src.size());
-				//Image<T> imgVec_rev(revSrc, 1, src.size());
-				//Image<T> imgVec_max(maxLine, 1, src.size());
-				//Image<T> imgVec_min(minLine, 1, src.size());
-				//Image<T> imgVec_mea(meanLine, 1, src.size());
-				//Image<T> imgVec_dst(src, 1, src.size());
-				//MLARR::Analyzer::Plotter<T> plot_src(100, imgVec_src);
-				//MLARR::Analyzer::Plotter<T> plot_fil(100, imgVec_fil);
-				//MLARR::Analyzer::Plotter<T> plot_rev(100, imgVec_rev);
-				//MLARR::Analyzer::Plotter<T> plot_max(100, imgVec_max);
-				//MLARR::Analyzer::Plotter<T> plot_min(100, imgVec_min);
-				//MLARR::Analyzer::Plotter<T> plot_mea(100, imgVec_mea);
-				//MLARR::Analyzer::Plotter<T> plot_dst(100, imgVec_dst);
-				//MLARR::IO::PlotDisplay<T, size_t> disp_plot_src("src", plot_src );
-				//MLARR::IO::PlotDisplay<T, size_t> disp_plot_fil("fil", plot_fil );
-				//MLARR::IO::PlotDisplay<T, size_t> disp_plot_rev("rev", plot_rev );
-				//MLARR::IO::PlotDisplay<T, size_t> disp_plot_max("max", plot_max );
-				//MLARR::IO::PlotDisplay<T, size_t> disp_plot_min("min", plot_min );
-				//MLARR::IO::PlotDisplay<T, size_t> disp_plot_mea("mean", plot_mea );
-				//MLARR::IO::PlotDisplay<T, size_t> disp_plot_dst("dst", plot_dst );
 
 				/* Moving Average */
 				movingAveragefilter( src, filterSize, filSrcOnce );

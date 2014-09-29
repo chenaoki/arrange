@@ -33,7 +33,7 @@ namespace MLARR{
             MLARR::Basic::Image<unsigned char>& getBin(void){
 				for( int h = 0; h < this->height ; h++){
 					for( int w = 0; w < this->width; w++){
-						if( *(this->im_roi.getRef(w, h)) && *(this->srcImg.getRef(w, h)) > 0 ){
+						if( *(this->im_roi.at(w, h)) && *(this->srcImg.at(w, h)) > 0 ){
                             this->im_bin.setValue(w, h, 1);
                         }else{
                             this->im_bin.setValue(w, h, 0);
@@ -43,59 +43,57 @@ namespace MLARR{
                 return this->im_bin;
             };
 		};
-
-		template<class T>
-		class Plotter : public ImageAnalyzer<T, unsigned char>
-		{
+        
+        template<class T_IN, class T_OUT>
+		class MovieAnalyzer : public Image<T_OUT>{
+		protected:
+            MLARR::Basic::Image<T_IN>& srcImg;
+			MLARR::Basic::Image<unsigned char> im_roi;
+			std::vector< Image<T_IN> > srcImgBuf;
+			std::vector< Image<T_OUT> > outImgBuf;
+			int nBufSrc;
+			int nBufOut;
+			int nOutPos;
+			int flagValid;
 		public:
-			double max, min, amp;
-			const double h_mergin;
-		public:
-			Plotter( const int _height, MLARR::Basic::Image<T>& _srcImg )
-				: ImageAnalyzer<T, unsigned char>(_height, _srcImg.nPix(), 1, _srcImg), max(static_cast<double>( INT_MIN )), min(static_cast<double>( INT_MAX )), amp(0), h_mergin(0.1){
+			MovieAnalyzer( Image<T_IN>& _srcImg, int _nBufSrc, int _nBufOut, int _nOutPos )
+            : Image<T_OUT>( _srcImg ), srcImg(_srcImg),
+            im_roi(_srcImg.height, _srcImg.width, 1),
+            srcImgBuf(), outImgBuf(), nBufOut(_nBufOut), nBufSrc(_nBufSrc), nOutPos(_nOutPos), flagValid(0){
 			};
-			virtual ~Plotter(void){};
-			void execute(void){
-
-				/* initialize */
-				max = -1 * DBL_MAX;
-				min = DBL_MAX;
-				amp = 0.0;
-				this->clear(1);
-
-				/* search max, min */
-				T* ptr = this->srcImg.getPtr();
-				for( int i = 0; i< this->srcImg.nPix(); i++){
-					max = max >= static_cast<double>(*ptr) ? max : *ptr;
-					min = min <= static_cast<double>(*ptr) ? min : *ptr;
-					ptr++;
-				}
-				amp = max - min;
-
-				/* draw plot */
-				if( amp != 0 ){
-					ptr = this->srcImg.getPtr();
-					for( int i = 0; i< this->srcImg.nPix(); i++){
-						size_t h = getHeight( *ptr );
-						this->setValue(i, h, 0);
-						ptr++;
-					}
-				}else{
-					for( int i = 0; i< this->srcImg.nPix(); i++){
-						this->setValue( i, this->height / 2 , 0 );
-					}
+			virtual ~MovieAnalyzer(void){};
+			const Image<char>& getRoi(void){ return im_roi; };
+			void setRoi(const Image<unsigned char>& src){ im_roi = src; };
+			void updateSrc(void){
+				this->srcImgBuf.push_back( this->srcImg );
+				while( this->srcImgBuf.size() > static_cast<size_t>(nBufSrc) ){
+					this->srcImgBuf.erase( this->srcImgBuf.begin());
 				}
 			};
-			size_t getHeight(const T& value){
-				return static_cast<size_t>( this->height * ( 1 - h_mergin ) * ( max - value ) / amp + ( this->height * h_mergin / 2.0 ) );
-			};
-			double getHeightValue(size_t h){
-				return max - ( amp * ( h / this->height - h_mergin / 2.0 ) / (1 - h_mergin) );
-			};
+			virtual void execute(void) = 0;
+            
 		};
+        
+        template<typename TIN, class TOUT>
+        class TimeSeriesFilter{
+        protected:
+            std::vector<TIN> buffer;
+            TOUT ret;
+        public:
+            TimeSeriesFilter( void ) : buffer(), ret(0) {};
+            TimeSeriesFilter( TOUT iniValue ) : buffer(), ret(iniValue){};
+            TimeSeriesFilter( const TimeSeriesFilter<TIN, TOUT>& rhs ) : buffer(), ret(rhs.ret) {};
+            virtual ~TimeSeriesFilter(){};
+            TimeSeriesFilter& operator=( const TimeSeriesFilter<TIN, TOUT>& rhs ){
+                this->ret = rhs.ret;
+                this->buffer.clear();
+                std::copy( rhs.buffer.begin(), rhs.buffer.end(), std::back_inserter(this->buffer));
+            };
+            TOUT& refValue(void){ return ret;};
+            virtual void update(TIN& temp){};
+        };
 
-
-
+		
 		template<class T>
 		class MaxImageAnalyzer : public ImageAnalyzer<T, T>
 		{
@@ -108,8 +106,8 @@ namespace MLARR{
 			void execute(void){
 				for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
-						T tmpMax = *(this->getRef(w, h));
-						T value = *(this->srcImg.getRef(w, h));
+						T tmpMax = *(this->at(w, h));
+						T value = *(this->srcImg.at(w, h));
 						this->setValue( w, h, tmpMax > value ? tmpMax : value );
 					}
 				}
@@ -128,13 +126,38 @@ namespace MLARR{
 			void execute(void){
 				for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
-						T tmpMin = *(this->getRef(w, h));
-						T value = *(this->srcImg.getRef(w, h));
+						T tmpMin = *(this->at(w, h));
+						T value = *(this->srcImg.at(w, h));
 						this->setValue( w, h, tmpMin > value ? value : tmpMin);
 					}
 				}
 			};
 		};
+        
+        template <typename T>
+        class RangeDetector : public ImageAnalyzer<T, unsigned char>
+        {
+        protected:
+            T _min;
+            T _max;
+        public:
+            explicit RangeDetector( MLARR::Basic::Image<T>& _src, T min, T max)
+            :ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), _min(min), _max(max)
+            {};
+            ~RangeDetector(void){};
+        public:
+            void execute(void){
+                this->clear();
+                for( int h = 0; h < this->height; h++){
+					for( int w = 0; w < this->width; w++){
+                        if( *(this->im_roi.at(w, h)) ){
+                            T val = *(this->srcImg.at(w, h));
+                            this->setValue( w, h, val <= _max && val >= _min ? 1 : 0 );
+                        }
+                    }
+                }
+            };
+        };
 
 		
 		template<class T>
@@ -151,7 +174,7 @@ namespace MLARR{
 			void execute(void){
 				for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
-						this->setValue(w, h, *(this->srcImg.getRef( off_x + w, off_y + h)));
+						this->setValue(w, h, *(this->srcImg.at( off_x + w, off_y + h)));
 					}
 				}
 			};
@@ -207,7 +230,7 @@ namespace MLARR{
 			void execute(void){
 				for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
-						this->setValue(w, h, *(this->srcImg.getRef(w*2,h*2)));
+						this->setValue(w, h, *(this->srcImg.at(w*2,h*2)));
 					}
 				}
 			};
@@ -224,7 +247,7 @@ namespace MLARR{
 			void execute(void){
 				for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
-						this->setValue(w, h, *(this->srcImg.getRef(w/2,h/2)));
+						this->setValue(w, h, *(this->srcImg.at(w/2,h/2)));
 					}
 				}
 			};
@@ -242,9 +265,9 @@ namespace MLARR{
 				this->clear(0);
 				for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width - 1; w++){
-						if( *(this->im_roi.getRef(w, h)) ){
-                            double p = *this->srcImg.getRef(w, h);
-                            double q = *this->srcImg.getRef(w+1, h);
+						if( *(this->im_roi.at(w, h)) ){
+                            double p = *this->srcImg.at(w, h);
+                            double q = *this->srcImg.at(w+1, h);
                             this->setValue(w, h, q - p);
                         }
                     }
@@ -263,9 +286,9 @@ namespace MLARR{
 				this->clear(0);
 				for( int h = 0; h < this->height - 1; h++){
 					for( int w = 0; w < this->width; w++){
-						if( *(this->im_roi.getRef(w, h)) ){
-                            double p = *this->srcImg.getRef(w, h);
-                            double q = *this->srcImg.getRef(w, h+1);
+						if( *(this->im_roi.at(w, h)) ){
+                            double p = *this->srcImg.at(w, h);
+                            double q = *this->srcImg.at(w, h+1);
                             this->setValue(w, h, q - p);
                         }
                     }
@@ -290,9 +313,9 @@ namespace MLARR{
 			void execute(void){
 				for( int h = 0; h < this->height ; h++){
 					for( int w = 0; w < this->width; w++){
-						if( *(this->im_roi.getRef(w, h)) ){
-							T valSrc = *(this->srcImg.getRef(w, h ));
-							T valCmp = *(this->cmpImg.getRef(w, h ));
+						if( *(this->im_roi.at(w, h)) ){
+							T valSrc = *(this->srcImg.at(w, h ));
+							T valCmp = *(this->cmpImg.at(w, h ));
 							this->setValue(w, h, ( valSrc > thre || valCmp > thre ) ? 1 : 0 );
 						}
 					}
@@ -316,9 +339,9 @@ namespace MLARR{
 			void execute(void){
 				for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
-						if( *(this->im_roi.getRef(w, h)) ){
-							T valSrc = *(this->srcImg.getRef(w, h ));
-							T valCmp = *(this->cmpImg.getRef(w, h ));
+						if( *(this->im_roi.at(w, h)) ){
+							T valSrc = *(this->srcImg.at(w, h ));
+							T valCmp = *(this->cmpImg.at(w, h ));
 							this->setValue(w, h, ( valSrc > thre && valCmp > thre ) ? 1 : 0 );
 						}
 					}
@@ -341,17 +364,18 @@ namespace MLARR{
 			};
 			~BinaryAdjacent(void){};
 			void execute(void){
+                this->clear(0);
 				for( int h = 0; h <= this->height - winSize; h++){
 					for( int w = 0; w <= this->width - winSize; w++){
                         int h_c = h + ( winSize - 1 )/2;
                         int w_c = w + ( winSize - 1 )/2;
-						if( *(this->im_roi.getRef(w_c, h_c)) ){
+						if( *(this->im_roi.at(w_c, h_c)) ){
                             int cntSrc = 0;
                             int cntCmp = 0;
                             for( int i = 0; i < winSize; i++){
 								for( int j = 0; j < winSize; j++){
-									cntSrc += *(this->srcImg.getRef(w_c + i, h_c + j)) > thre ? 1 : 0;
-									cntCmp += *(this->cmpImg.getRef(w_c + i, h_c + j)) > thre ? 1 : 0;
+									cntSrc += *(this->srcImg.at(w + i, h + j)) > thre ? 1 : 0;
+									cntCmp += *(this->cmpImg.at(w + i, h + j)) > thre ? 1 : 0;
                                 }
 							}
                             this->setValue(w_c, h_c, ( cntSrc && cntCmp ) ? 1 : 0);
@@ -360,7 +384,136 @@ namespace MLARR{
 				}
 			};
 		};
-
+        
+        template <class T>
+		class BinaryThinLine : public ImageAnalyzer<T, T>{ /* Tamura's algorhythm. */
+        private:
+            static inline bool isPattern1(const std::vector<T>& vec){
+                return ( vec[1] == 0 || vec[5] == 0 );
+            };
+            static inline bool isPattern2(const std::vector<T>& vec){
+                return ( vec[7] == 0 || vec[3] == 0 );
+            };
+            static inline bool isExcept_common(const std::vector<T>& vec){
+                return (( vec[3] == 0 && vec[5] == 0 && vec[7] == 1) ||
+                        ( vec[1] == 0 && vec[3] == 1 && vec[7] == 0) ||
+                        ( vec[1] == 1 && vec[3] == 0 && vec[5] == 0) ||
+                        ( vec[1] == 0 && vec[5] == 1 && vec[7] == 0) ||
+                        ( vec[3] == 0 && vec[6] == 1 && vec[7] == 0) ||
+                        ( vec[0] == 1 && vec[1] == 0 && vec[3] == 0) ||
+                        ( vec[1] == 0 && vec[2] == 1 && vec[5] == 0) ||
+                        ( vec[5] == 0 && vec[7] == 0 && vec[8] == 1) ||
+                        ( vec[0] == 0 && vec[1] == 1 && vec[2] == 0 && vec[3] == 1 && vec[5] == 1 && vec[6] == 0 && vec[8] == 0) ||
+                        ( vec[0] == 0 && vec[1] == 1 && vec[2] == 0 && vec[5] == 1 && vec[6] == 0 && vec[7] == 1 && vec[8] == 0) ||
+                        ( vec[0] == 0 && vec[2] == 0 && vec[3] == 1 && vec[5] == 1 && vec[6] == 0 && vec[7] == 1 && vec[8] == 0) ||
+                        ( vec[0] == 0 && vec[1] == 1 && vec[2] == 0 && vec[3] == 1 && vec[6] == 0 && vec[7] == 1 && vec[8] == 0));
+            };
+            static inline bool isExcept1(const std::vector<T>& vec){
+                if( isExcept_common(vec) ){
+                    return true;
+                }else{
+                    return (( vec[1] == 0 && vec[5] == 1 && vec[7] == 1 && vec[8] == 0) ||
+                            ( vec[0] == 0 && vec[1] == 1 && vec[3] == 1 && vec[5] == 0 ));
+                }
+            }
+            static inline bool isExcept2(const std::vector<T>& vec){
+                if( isExcept_common(vec) ){
+                    return true;
+                }else{
+                    return (( vec[0] == 0 && vec[1] == 1 && vec[3] == 1 && vec[7] == 0) ||
+                            ( vec[3] == 0 && vec[5] == 1 && vec[7] == 1 && vec[8] == 0 ));
+                }
+            }
+            inline void get9box( int w_c, int h_c, std::vector<T>& vec ){
+                vec.clear();
+                if( w_c > 0 && w_c < this->width - 1 && h_c > 0 && w_c < this->height - 1 ){
+                    for( int i = -1; i <= 1; i++){
+                        for( int j = -1; j <= 1; j++){
+                            vec.push_back( *(this->at(w_c + j, h_c + i)) );
+                        }
+                    }
+                }
+            };
+		public:
+			explicit BinaryThinLine( MLARR::Basic::Image<T>& _srcImg )
+            : ImageAnalyzer<T, T>( _srcImg.height, _srcImg.width, 0, _srcImg){
+			};
+			~BinaryThinLine(void){};
+			void execute(void){
+                
+                dynamic_cast< Image<T>& > (*this) = this->srcImg;
+                Image<T> imgTemp(*this);
+                
+                //IO::Display<unsigned char> dispSrc("src", this->srcImg, 1, 0, IO::colMap_gray);
+                //IO::Display<unsigned char> dispTmp("tmp", imgTemp, 1, 0, IO::colMap_gray);
+                //dispSrc.show();
+                
+                while(1){
+                    
+                    bool flg = false;
+                    std::vector<T> vec;
+                    
+                    /* Pattern 1 check. */
+                    imgTemp.clear(0);
+                    for( int h = 0; h <= this->height - 3; h++){
+                        for( int w = 0; w <= this->width - 3; w++){
+                            int h_c = h + 1;
+                            int w_c = w + 1;
+                            T val = 0;
+                            if( *(this->im_roi.at(w_c, h_c)) ){
+                                val = *this->at(w_c, h_c);
+                                if( val == 1 ){
+                                    get9box(w_c, h_c, vec);
+                                    if( 9 == vec.size() ){
+                                        if( isPattern1(vec) ){
+                                            if( !isExcept1(vec) ){
+                                                flg = true;
+                                                val = 0;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            *imgTemp.at(w_c, h_c) = val;
+                        }
+                    }
+                    //dispTmp.show();
+                    //cvWaitKey(-1);
+                    dynamic_cast< Image<T>& >(*this) = imgTemp;
+                    if(!flg) break;
+                    
+                    /* Pattern 2 check. */
+                    imgTemp.clear(0);
+                    for( int h = 0; h <= this->height - 3; h++){
+                        for( int w = 0; w <= this->width - 3; w++){
+                            int h_c = h + 1;
+                            int w_c = w + 1;
+                            T val = 0;
+                            if( *(this->im_roi.at(w_c, h_c)) ){
+                                val = *this->at(w_c, h_c);
+                                if( val == 1 ){
+                                    get9box(w_c, h_c, vec);
+                                    if( 9 == vec.size() ){
+                                        if( isPattern2(vec) ){
+                                            if( !isExcept1(vec) ){
+                                                flg = true;
+                                                val = 0;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            *imgTemp.at(w_c, h_c) = val;
+                        }
+                    }
+                    //dispTmp.show();
+                    //cvWaitKey(-1);
+                    dynamic_cast< Image<T>& >(*this) = imgTemp;
+                    if(!flg) break;
+                    
+                }
+			};
+		};
 
 		template<class T>
 		class SpacialFilter : public ImageAnalyzer<T, T>{
@@ -380,12 +533,12 @@ namespace MLARR{
 					for( int w = 0; w <= this->width - coeffImg.width; w++){
                         int h_c = h + ( coeffImg.height - 1 )/2;
                         int w_c = w + ( coeffImg.width - 1 )/2;
-						if( *(this->im_roi.getRef(w_c, h_c)) ){
+						if( *(this->im_roi.at(w_c, h_c)) ){
 							// position of center pix
 							double value = 0.0;
 							for( int i = 0; i < coeffImg.width; i++){
 								for( int j = 0; j < coeffImg.height; j++){
-									value += static_cast<double>( (*(this->srcImg.getRef(w+i, h+j))) * (*(coeffImg.getRef(i, j))));
+									value += static_cast<double>( (*(this->srcImg.at(w+i, h+j))) * (*(coeffImg.at(i, j))));
 								}
 							}
 							this->setValue(w_c, h_c, static_cast<T>(value));
@@ -412,13 +565,13 @@ namespace MLARR{
 			void execute(void){
 				for( int h = 0; h <= this->height - ksize; h++){
 					for( int w = 0; w <= this->width - ksize; w++){
-						if( *(this->im_roi.getRef(w, h)) ){
+						if( *(this->im_roi.at(w, h)) ){
 							int h_c = h + ( ksize - 1 )/2;
 							int w_c = w + ( ksize - 1 )/2;
 							std::vector<T> v;
 							for( int i = 0; i < ksize; i++){
 								for( int j = 0; j < ksize; j++){
-									v.push_back(*(this->srcImg.getRef(w+i, h+j)));
+									v.push_back(*(this->srcImg.at(w+i, h+j)));
 								}
 							}
 							std::nth_element( v.begin(), v.begin() + v.size() / 2, v.end() );
@@ -449,13 +602,13 @@ namespace MLARR{
                 int label = 1;
 				for( int h = 1; h < this->height - 1; h++){
 					for( int w = 1; w < this->width - 1; w++){
-                        if( *(this->srcImg.getRef(w, h))){
+                        if( *(this->srcImg.at(w, h))){
                             int sum = 0;
                             int tempLabel = -1;
-                            unsigned char v1 = *(this->getRef(w-1, h));
-                            unsigned char v2 = *(this->getRef(w+1, h-1));
-                            unsigned char v3 = *(this->getRef(w,   h-1));
-                            unsigned char v4 = *(this->getRef(w-1, h-1));
+                            unsigned char v1 = *(this->at(w-1, h));
+                            unsigned char v2 = *(this->at(w+1, h-1));
+                            unsigned char v3 = *(this->at(w,   h-1));
+                            unsigned char v4 = *(this->at(w-1, h-1));
                             sum = v1 + v2 + v3 + v4;
                             if( sum == 0 ){
                                 tempLabel = ++label;
@@ -479,8 +632,8 @@ namespace MLARR{
                 
                 for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
-                        if( *(this->getRef(w, h))){
-                            int tempLabel = map_LUT[*(this->getRef(w, h))];
+                        if( *(this->at(w, h))){
+                            int tempLabel = map_LUT[*(this->at(w, h))];
                             this->setValue(w, h, tempLabel );
                             map_cluster[tempLabel].push_back(MLARR::Basic::Point<int>(w, h));
                         }
@@ -576,10 +729,10 @@ namespace MLARR{
                     for( int h = 0; h < ptr->height; h++){
                         for( int w = 0; w < ptr->width; w++){
                             int sum = 0;
-                            if( ptr->getBin().getRef(w,h) ){
+                            if( ptr->getBin().at(w,h) ){
                                 for( int n = 0; n < rate; n++){
                                     for( int m = 0; m < rate; m++){
-                                        sum += static_cast<int>(*this->im_bin.getRef(w+m, h+n));
+                                        sum += static_cast<int>(*this->im_bin.at(w+m, h+n));
                                     }
                                 }
                                 if( sum == 0 ){

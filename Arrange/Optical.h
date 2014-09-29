@@ -17,6 +17,9 @@
 
 #include "IO.h"
 #include "Analyzer.h"
+#include "VectorAnalyzer.h"
+
+using namespace MLARR::Basic;
 
 namespace MLARR{
     
@@ -55,10 +58,10 @@ namespace MLARR{
 			void execute(void){
 				for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
-						if( *(this->im_roi.getRef(w, h)) ){
-							T max = *(this->maxImage.getRef(w, h));
-							T range = *(this->im_range.getRef(w, h));
-							T val = *(this->srcImg.getRef(w, h));
+						if( *(this->im_roi.at(w, h)) ){
+							T max = *(this->maxImage.at(w, h));
+							T range = *(this->im_range.at(w, h));
+							T val = *(this->srcImg.at(w, h));
 							if( range ){
 								this->setValue( w, h, static_cast<double>( max - val ) / range );
 							}
@@ -71,7 +74,7 @@ namespace MLARR{
 			void updateRange(void){
 				for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
-						T range = *(maxImage.getRef(w, h)) - *(minImage.getRef(w, h));
+						T range = *(maxImage.at(w, h)) - *(minImage.at(w, h));
 						this->im_range.setValue( w, h, range);
 						this->im_roi.setValue( w, h, range > roiThre ? 1 : 0 );
 					}
@@ -79,6 +82,71 @@ namespace MLARR{
 			};
 		};
         
+        template <typename T, class FIL>
+        class ActivationTimeMap : public ImageAnalyzer<T, unsigned short>
+        {
+        protected:
+            int minPeakDistance;
+            Image< FIL > imgFilter;
+        public:
+            explicit ActivationTimeMap( Image<T>& _srcImg, FIL &_fil, int _minPeakDistance )
+            : ImageAnalyzer<T, unsigned short>( _srcImg.height, _srcImg.width, 0, _srcImg ),
+              imgFilter( _srcImg.height, _srcImg.width, _fil ), minPeakDistance(_minPeakDistance)
+            {};
+            ~ActivationTimeMap(void){};
+        public:
+            void execute(void){
+				for( int h = 0; h < this->height; h++){
+					for( int w = 0; w < this->width; w++){
+                        if( *(this->im_roi.at(w, h)) ){
+                            FIL *ptrFil = imgFilter.at(w, h);
+                            unsigned char buf = ptrFil->refValue(); /* filter output value on the last frame */
+                            T val = *(this->srcImg.at(w, h));
+                            ptrFil->update(val);
+                            /* count up */
+                            if( ptrFil->refValue() > 0 && buf == 0 && *this->at(w,h) >= minPeakDistance ){
+                                this->setValue(w, h, 1); /* counter reset */
+                            }else{
+                                this->setValue(w, h, *(this->at(w, h)) + 1); /* increment */
+                            }
+                        }
+                    }
+                }
+            };
+        };
+        
+        template<class T>
+		class PhaseMedianFilter : public ImageAnalyzer<T, T>{
+		private:
+			int ksize;
+		public:
+			explicit PhaseMedianFilter(MLARR::Basic::Image<T>& _srcImg, int _ksize)
+            : ImageAnalyzer<T, T>( _srcImg.height , _srcImg.width, 0, _srcImg ), ksize(_ksize){
+				if( ksize % 2 == 0) {
+					throw "invalid parameter @ MedianFilter constructor.";
+				}
+			};
+			~PhaseMedianFilter(void){};
+			void execute(void){
+				for( int h = 0; h <= this->height - ksize; h++){
+					for( int w = 0; w <= this->width - ksize; w++){
+						if( *(this->im_roi.at(w, h)) ){
+							int h_c = h + ( ksize - 1 )/2;
+							int w_c = w + ( ksize - 1 )/2;
+                            T val_c = *this->srcImg.at(w_c, h_c);
+							std::vector<T> v;
+							for( int i = 0; i < ksize; i++){
+								for( int j = 0; j < ksize; j++){
+									v.push_back(phaseComplement(*(this->srcImg.at(w+i, h+j)) - val_c));
+								}
+							}
+							std::nth_element( v.begin(), v.begin() + v.size() / 2, v.end() );
+							this->setValue(w_c, h_c, phaseComplement( val_c + v[ v.size() / 2]));
+						}
+					}
+				}
+			};
+		};
         
         template<class T>
         class PhaseSpacialFilter : public SpacialFilter<T>{
@@ -95,13 +163,13 @@ namespace MLARR{
 					for( int w = 0; w <= this->width - this->coeffImg.width; w++){
                         int h_c = h + ( this->coeffImg.height - 1 )/2;
                         int w_c = w + ( this->coeffImg.width - 1 )/2;
-						if( *(this->im_roi.getRef(w_c, h_c)) ){
+						if( *(this->im_roi.at(w_c, h_c)) ){
                             
                             // search Max, Min
                             double min = 2 * M_PI;
                             for( int i = 0; i < this->coeffImg.width; i++){
 								for( int j = 0; j < this->coeffImg.height; j++){
-                                    double value = *(this->srcImg.getRef(w+i, h+j));
+                                    double value = *(this->srcImg.at(w+i, h+j));
                                     min = min > value ? value : min;
 								}
 							}
@@ -110,8 +178,8 @@ namespace MLARR{
 							double value = 0.0;
 							for( int i = 0; i < this->coeffImg.width; i++){
 								for( int j = 0; j < this->coeffImg.height; j++){
-                                    double diff = (*(this->srcImg.getRef(w+i, h+j))) - min;
-									value += phaseComplement( diff ) * (*(this->coeffImg.getRef(i, j)));
+                                    double diff = (*(this->srcImg.at(w+i, h+j))) - min;
+									value += phaseComplement( diff ) * (*(this->coeffImg.at(i, j)));
 								}
 							}
 							this->setValue(w_c, h_c, static_cast<T>(phaseComplement(value+min)));
@@ -156,17 +224,17 @@ namespace MLARR{
 				if( coef.size() == buffer.size() ){
 					for( int h = 0; h < this->height; h++){
 						for( int w = 0; w < this->width; w++){
-							if( *(this->im_roi.getRef(w, h)) ){
+							if( *(this->im_roi.at(w, h)) ){
 								double val = 0.0;
 								it_buf = buffer.begin();
 								it_coef = coef.begin();
 								for(; it_coef!=coef.end(); it_coef++){
-									T pixVal = *((*it_buf).getRef(w, h));
+									T pixVal = *((*it_buf).at(w, h));
 									val += (*it_coef) * pixVal;
 									it_buf++;
 								}
 								char tempSign = val > 0.0 ? 1 : 0 ;
-								char lastSign = *(this->img_sign.getRef(w, h));
+								char lastSign = *(this->img_sign.at(w, h));
 								this->setValue(w, h, tempSign > 0 ? ( lastSign > 0 ? upstroke : bottom ) : ( lastSign > 0 ? peak : downstroke ));
 								this->img_sign.setValue( w, h, tempSign);
 							}else{
@@ -201,12 +269,12 @@ namespace MLARR{
                 imgSP.execute();
 				for( int h = 1; h < this->height - 1; h++){
 					for( int w = 1; w < this->width - 1; w++){
-						if( *(this->im_roi.getRef(w, h)) ){
+						if( *(this->im_roi.at(w, h)) ){
 							int flag_on[5] = {1,1,1,1,1};
 							int flag[5] = {1,0,0,0,0};
 							for(int i = -1; i <=1 ; i++){
 								for(int j = -1; j <=1; j++){
-									char psVal = *this->imgSP.getRef(w+i, h+j);
+									char psVal = *this->imgSP.at(w+i, h+j);
 									if( psVal >= 0 && psVal <= 4){
 										flag[psVal] = 1;
 									}
@@ -243,9 +311,9 @@ namespace MLARR{
                 this->imgDiffY.execute();
 				for( int h = 0; h <this->height; h++){
 					for( int w = 0; w <this->width; w++){
-						if( *(this->im_roi.getRef(w, h)) ){
-                            this->imgDiffX.setValue(w, h, phaseComplement(*this->imgDiffX.getRef(w, h)));
-                            this->imgDiffY.setValue(w, h, phaseComplement(*this->imgDiffY.getRef(w, h)));
+						if( *(this->im_roi.at(w, h)) ){
+                            this->imgDiffX.setValue(w, h, phaseComplement(*this->imgDiffX.at(w, h)));
+                            this->imgDiffY.setValue(w, h, phaseComplement(*this->imgDiffY.at(w, h)));
                         }
                     }
                 }
@@ -253,7 +321,7 @@ namespace MLARR{
                 this->imgCurlY.execute();
 				for( int h = 0; h <this->height; h++){
 					for( int w = 0; w <this->width; w++){
-                        this->setValue( w, h, *(this->imgCurlX.getRef(w, h)) + *(this->imgCurlY.getRef(w, h) ));
+                        this->setValue( w, h, *(this->imgCurlX.at(w, h)) + *(this->imgCurlY.at(w, h) ));
                     }
                 }
                 return;
@@ -285,15 +353,15 @@ namespace MLARR{
                         int h_c = h + ( winSize - 1 )/2;
                         int w_c = w + ( winSize - 1 )/2;
                         
-						if( *(this->im_roi.getRef(w_c, h_c)) ){
+						if( *(this->im_roi.at(w_c, h_c)) ){
                             
-                            double base = *(this->srcImg.getRef(w_c, h_c));
+                            double base = *(this->srcImg.at(w_c, h_c));
                             
 							// evaluate div
                             double div = 0.0;
 							for( int i = 0; i < winSize; i++){
 								for( int j = 0; j < winSize; j++){
-                                    double diff = (*(this->srcImg.getRef(w+i, h+j))) - base;
+                                    double diff = (*(this->srcImg.at(w+i, h+j))) - base;
                                     diff = phaseComplement( diff );
 									div += diff * diff;
 								}
@@ -329,17 +397,17 @@ namespace MLARR{
 					for( int w = 0; w <= this->width - winSize; w++){
                         int h_c = h + ( winSize - 1 )/2;
                         int w_c = w + ( winSize - 1 )/2;
-                        if( *(this->im_roi.getRef(w_c, h_c)) ){
+                        if( *(this->im_roi.at(w_c, h_c)) ){
                             
-                            double base = *(this->srcImg.getRef(w_c, h_c));
+                            double base = *(this->srcImg.at(w_c, h_c));
                             int flag[4] = {0,0,0,0};
                             
 							for( int i = 0; i < winSize; i++){
 								for( int j = 0; j < winSize; j++){
-                                    double diff = (*(this->srcImg.getRef(w+i, h+j))) - base;
+                                    double diff = (*(this->srcImg.at(w+i, h+j))) - base;
                                     diff = phaseComplement( diff ) + M_PI;
                                     flag[ static_cast<int>( diff / (M_PI / 2) )] = 1;
-                                    //flag[ static_cast<int>( (*(this->srcImg.getRef(w+i, h+j)) + M_PI) / (M_PI / 2) )] = 1;
+                                    //flag[ static_cast<int>( (*(this->srcImg.at(w+i, h+j)) + M_PI) / (M_PI / 2) )] = 1;
 								}
 							}
                             if( flag[0] + flag[1] + flag[2] + flag[3] >= 3 ){
@@ -367,15 +435,66 @@ namespace MLARR{
                 this->clear();
                 for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
-                        if( *(this->im_roi.getRef(w, h)) ){
-                            double p = *(this->srcImg.getRef(w, h));
+                        if( *(this->im_roi.at(w, h)) ){
+                            double p = *(this->srcImg.at(w, h));
                             this->setValue( w, h, phaseAbsDiff(p, _mean) < _range ? 1 : 0 );
                         }
                     }
                 }
             };
         };
-		
+        
+        class ElectrodePhaseComplement : public ImageAnalyzer<double, double>
+        {
+        protected:
+            const int minPixNum;
+            Image<unsigned char> imgMask;
+        public:
+            explicit ElectrodePhaseComplement( MLARR::Basic::Image<double>& _src, const std::string& maskImagePath, int _minPixNum )
+            :ImageAnalyzer<double,double>( _src.height, _src.width, 0, _src), imgMask(_src.height, _src.width, maskImagePath), minPixNum(_minPixNum)
+            {
+                if( this->height != imgMask.height || this->width != imgMask.width){
+                    throw string("Invalid size mask image : ") + maskImagePath;
+                }
+            };
+            ~ElectrodePhaseComplement(void){};
+        public:
+            void execute(void){
+                this->clear();
+                for( int h = 0; h < this->height; h++){
+					for( int w = 0; w < this->width; w++){
+                        if( *(this->imgMask.at(w, h)) ){
+                            int winRad = 1;
+                            while(1){
+                                double val =  *(this->srcImg.at(w, h));
+                                std::vector<double> v;
+                                for( int i = -winRad; i <= winRad; i++){
+                                    for( int j = -winRad; j <= winRad; j++){
+                                        int x = w + i;
+                                        int y = h + j;
+                                        if( x >= 0 && x < this->width && y >=0 && y < this->height){
+                                            if(*(this->imgMask.at(x, y)) == 0 && *( this->im_roi.at(x,y) ) != 0){
+                                                v.push_back( static_cast<double>( phaseComplement( *(this->srcImg.at(x, y)) - val )));
+                                            }
+                                        }
+                                    }
+                                }
+                                if( v.size() >= minPixNum ){
+                                    std::nth_element( v.begin(), v.begin() + v.size() / 2, v.end() );
+                                    *this->at(w, h) = phaseComplement( val + v[ v.size() / 2] );
+                                    break;
+                                }
+                                ++winRad;
+                                if( winRad > this->width / 4 || winRad > this->height / 4 )
+                                    break;
+                            }
+                        }else{
+                            *this->at(w, h) = *this->srcImg.at(w,h);
+                        }
+                    }
+                }
+            };
+        };
         
     }
 }

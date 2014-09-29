@@ -29,6 +29,7 @@ picojson::object MLARR::IO::loadJsonParam(const std::string& paramFilePath){
     }
     ifs.close();
     
+    
     picojson::value val;
     std::string  err;
     picojson::parse(val, str_json.c_str(), str_json.c_str() + str_json.size(), &err);
@@ -38,6 +39,13 @@ picojson::object MLARR::IO::loadJsonParam(const std::string& paramFilePath){
     
     return val.get<picojson::object>();
     
+};
+
+void MLARR::IO::brendColor( int numColor1, int numColor2, double alpha, cv::Vec3b &pixVal){
+    pixVal[0] = arrColor[numColor1].val[0] * alpha + arrColor[numColor2].val[0] * (1-alpha);
+    pixVal[1] = arrColor[numColor1].val[1] * alpha + arrColor[numColor2].val[1] * (1-alpha);
+    pixVal[2] = arrColor[numColor1].val[2] * alpha + arrColor[numColor2].val[2] * (1-alpha);
+    return;
 };
 
 int ArduinoSerial::fd;

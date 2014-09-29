@@ -9,35 +9,25 @@
 
 namespace MLARR{
 	namespace Analyzer{
-
-		template<class T_IN, class T_OUT>
-		class MovieAnalyzer : public Image<T_OUT>{
-		protected:
-            MLARR::Basic::Image<T_IN>& srcImg;
-			MLARR::Basic::Image<unsigned char> im_roi;
-			std::vector< Image<T_IN> > srcImgBuf;
-			std::vector< Image<T_OUT> > outImgBuf;
-			int nBufSrc; 
-			int nBufOut; 
-			int nOutPos;
-			int flagValid;
+        
+        template<typename T, int order> class HilbertFilter
+		{
+		private:
+			const T *const hm;
+			double xn[order+1]; // buffer
 		public:
-			MovieAnalyzer( Image<T_IN>& _srcImg, int _nBufSrc, int _nBufOut, int _nOutPos ) 
-				: Image<T_OUT>( _srcImg ), srcImg(_srcImg), 
-				im_roi(_srcImg.height, _srcImg.width, 1), 
-				srcImgBuf(), outImgBuf(), nBufOut(_nBufOut), nBufSrc(_nBufSrc), nOutPos(_nOutPos), flagValid(0){
+			HilbertFilter(const T hk[]) : hm(hk){
+				for (int k=0; k<=order; k++) xn[k] = 0.0;
 			};
-			virtual ~MovieAnalyzer(void){};
-			const Image<char>& getRoi(void){ return im_roi; };
-			void setRoi(const Image<unsigned char>& src){ im_roi = src; };
-			void updateSrc(void){
-				this->srcImgBuf.push_back( this->srcImg );
-				while( this->srcImgBuf.size() > static_cast<size_t>(nBufSrc) ){
-					this->srcImgBuf.erase( this->srcImgBuf.begin());
-				}
+			~HilbertFilter(void){};
+			inline void execute(const T xin, T &y_re, T &y_im){
+				double acc = 0.0;
+				xn[0] = xin;
+				for (int k=0; k<=order; k++) acc = acc + hm[k]*xn[k];
+				y_re = static_cast<T>(xn[order/2]);
+				y_im = static_cast<T>(acc);
+				for (int k=order; k>0; k--) xn[k] = xn[k-1]; // moving signal
 			};
-			virtual void execute(void) = 0;
-
 		};
 		
 		template<class T>
@@ -70,13 +60,13 @@ namespace MLARR{
 					std::vector<T> srcStab;
 					for( int h = 0; h < this->height; h++){
 						for( int w = 0; w < this->width; w++){		
-							if( *(this->im_roi.getRef(w, h)) ){
+							if( *(this->im_roi.at(w, h)) ){
 								/* Stabilize signal */
 								srcVec.clear();
 								srcStab.clear();
 								typename std::vector<Image<T> >::iterator it_img = this->srcImgBuf.begin();
 								for( it_img = this->srcImgBuf.begin(); it_img != this->srcImgBuf.end(); it_img++){
-									srcVec.push_back( *(it_img->getRef(w, h)));
+									srcVec.push_back( *(it_img->at(w, h)));
 								}
 								MLARR::Analyzer::VectorAnalyzeFuncs<T>::stabilizeBaseLine( 
 									srcVec, 
@@ -112,7 +102,6 @@ namespace MLARR{
 
 
 		};
-
 
 	}
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdlib.h>
 #include <exception>
 #include <string>
 #include <list>
@@ -10,6 +11,8 @@
 #include <math.h>
 #include <typeinfo>
 #include <limits.h>
+#include <copyfile.h>
+#include <iterator>
 
 #include <vector>
 #include <map>

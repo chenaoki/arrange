@@ -55,11 +55,11 @@ namespace MLARR{
 			void clear(void){ 
 				this->clear(static_cast<T>(0)); 
 			};
-			const T* const getRef(const int pos){ 
+			const T* const at(const int pos){ 
 				return &(this->data[pos]); 
 			}
-			const T* const getRef(void){ 
-				return this->getRef(0); 
+			const T* const at(void){ 
+				return this->at(0); 
 			};
 			T* getPtr(const int pos){ 
 				return &(this->data[pos]); 
@@ -76,42 +76,84 @@ namespace MLARR{
 		template<class T> class Image
 		{
 		public:
-			T* data;
+			T** data;
 		public:
 			const int height;
 			const int width;
+        private:
+            inline int getPos(const int w, const int h ) const{
+				return  h * width + w ;
+			};
 		public:
 			Image(const int _height, const int _width, const T& iniValue) : width(_width), height(_height) { 
-				this->data = new T[this->nPix()];
+				this->data = new T*[this->nPix()];
+                for( int i = 0; i < this->nPix(); i++ ){
+                    this->data[i] = new T;
+                }
 				this->clear(iniValue);
 			};
 			Image(const Image<T>& rhs ) : width(rhs.width), height(rhs.height) {
-				this->data = new T[this->nPix()];
+				this->data = new T*[this->nPix()];
+                for( int i = 0; i < this->nPix(); i++ ){
+                    this->data[i] = new T;
+                }
 				*this = rhs;
 			};
-			Image( const cv::Mat& src ) : width(), height(){
-				this->data = new T[this->nPix()];
+			Image( int _height, int _width, const cv::Mat& src ) : width(_width), height(_height){
+				this->data = new T*[this->nPix()];
+                for( int i = 0; i < this->nPix(); i++ ){
+                    this->data[i] = new T;
+                }
 				*this = src;
 			};
+            Image( int _height, int _width, const std::string& srcPath ) : width(_width), height(_height){
+				this->data = new T*[this->nPix()];
+                for( int i = 0; i < this->nPix(); i++ ){
+                    this->data[i] = new T;
+                }
+                cv::Mat image = cv::imread(srcPath.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
+                if( image.empty()){
+                    throw string("Failed to load image file : ") + srcPath;
+                }
+				*this = image;
+			};
 			Image( const std::vector<T>& src, int _width, int _height ) : width(_width), height(_height){
-				this->data = new T[this->nPix()];
+				this->data = new T*[this->nPix()];
+                for( int i = 0; i < this->nPix(); i++ ){
+                    this->data[i] = new T;
+                }
 				if( this->nPix() == src.size()) *this = src;
 			};
 			virtual ~Image(void){
-				if( this->data ) delete this->data; 
+				if( this->data ){
+                    for( int i = 0; i < this->nPix(); i++ ){
+                        delete this->data[i];
+                    }
+                    delete this->data;
+                }
 			};
 			Image<T>& operator=( const Image<T>& rhs ){
 				if( width == rhs.width && height == rhs.height ){
-					memcpy( data, rhs.data, sizeof(T)*this->nPix() );
+                    for( int i = 0; i < this->nPix(); i++ ){
+                        *data[i] = *rhs.data[i];
+                    }
 				}
 				return *this;
 			};
 			Image<T>& operator=( const cv::Mat& src ){
-				T* ptr = this->getPtr();
 				for(int h = 0; h < this->height; h++){
 					for(int w = 0; w < this->width; w++){
-						*ptr = src.at<T>(w, h);
-						ptr++;
+						*(this->at(w, h)) = src.at<T>(h, w);
+					}
+				}
+				return *this;
+			};
+			Image<T>& operator=( const std::vector<T>& src ){
+				int cnt = 0;
+				for(int h = 0; h < this->height; h++){
+					for(int w = 0; w < this->width; w++){
+						*(this->at(w, h)) = src[cnt];
+						cnt++;
 					}
 				}
 				return *this;
@@ -119,25 +161,14 @@ namespace MLARR{
 			Image<T> operator+( const Image<T>& rhs ){
                 Image<T> temp(*this);
                 for( int n = 0; n < this->nPix(); n++){
-                    temp.data[n] = this->data[n] + rhs.data[n];
+                    *temp.data[n] = *(this->data[n]) + *(rhs.data[n]);
                 }
                 return temp;
 			};
-			Image<T>& operator=( const std::vector<T>& src ){
-				T* ptr = this->getPtr();
-				int cnt = 0;
-				for(int h = 0; h < this->height; h++){
-					for(int w = 0; w < this->width; w++){
-						*ptr = src[cnt];
-						ptr++; cnt++;
-					}
-				}
-				return *this;
-			}
 			void clear(const T& value){
 				for(int h = 0; h < this->height; h++){
 					for(int w = 0; w < this->width; w++){
-						this->data[getPos(w, h)] = value;
+						*(this->data[getPos(w, h)]) = value;
 					}
 				}
 			};
@@ -147,23 +178,11 @@ namespace MLARR{
 			int nPix(){ 
 				return this->width*this->height; 
 			};
-			int getPos(const int w, const int h ) const{ 
-				return  h * width + w ;
+			T* const at(const int w, const int h) const{
+				return this->data[ getPos(w,h) ];
 			};
-			const T* const getRef(const int w, const int h) const{ 
-				return &(this->data[ getPos(w,h) ]);
-			};
-			const T* const getRef(void) const{ 
-				return this->getRef(0,0); 
-			};
-			T* getPtr(const int w, const int h) const{
-				return &(this->data[ getPos(w,h) ]);
-			};
-			T* getPtr(void) const{
-				return this->getPtr(0,0); 
-			};
-			void setValue( const int w, const int h, const T& value){ 
-				this->data[ getPos(w,h) ] = value; 
+			void setValue( const int w, const int h, const T& value){
+				*(this->data[ getPos(w,h) ]) = value;
 			};
 			cv::Mat* clone(void) const{
 				int type = CV_8U;
@@ -174,11 +193,9 @@ namespace MLARR{
 				if( typeid(T) ==  typeid(float))           type = CV_32F;
 				if( typeid(T) ==  typeid(double))          type = CV_64F;
 				cv::Mat* retImg = new cv::Mat(this->height, this->width, type);
-				T* ptr = this->getPtr();
 				for(int h = 0; h < this->height; h++){
 					for(int w = 0; w < this->width; w++){
-						retImg->at<T>(w, h) = *ptr;
-						ptr++;
+						retImg->at<T>(h, w) = *(this->at(w, h));
 					}
 				}
 				return retImg;

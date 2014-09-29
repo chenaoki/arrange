@@ -25,6 +25,8 @@ namespace MLARR{
 			cv::Scalar(0,200,0),
 			cv::Scalar(200,0,0)
 		};
+        
+        extern void brendColor( int numColor1, int numColor2, double alpha, cv::Vec3b &pixVal);
 
         picojson::object loadJsonParam(const std::string& paramFilePath);
 
@@ -274,7 +276,7 @@ namespace MLARR{
 				if( fout ){
 					for(int h = 0; h < srcImage.height; h++){
 						for( int w=0; w < srcImage.width; w++){
-							fout.write( (char*)(this->srcImage.getRef(w,h)), sizeof(T));
+							fout.write( (char*)(this->srcImage.at(w,h)), sizeof(T));
 						}
 					}
 				}
@@ -288,7 +290,7 @@ namespace MLARR{
 				if( fout ){
 					for(int h = 0; h < srcImage.height; h++){
 						for( int w=0; w < srcImage.width; w++){
-							fout << *this->srcImage.getRef(w,h) << ",";
+							fout << *this->srcImage.at(w,h) << ",";
 						}
                         fout << std::endl;
 					}
@@ -319,7 +321,7 @@ namespace MLARR{
 					for(int w = 0; w < this->srcImg.width; w++){
 						char r, g, b;
 						cv::Vec3b pixVal;
-						T val = *(this->srcImg.getRef( w, h ));
+						T val = *(this->srcImg.at( w, h ));
 						unsigned char v = static_cast<unsigned char>( UCHAR_MAX * ( val - minVal ) / (maxVal - minVal) );
 						this->colMap.getColor( v, r, g, b);
 						pixVal[0] = b;
@@ -354,7 +356,17 @@ namespace MLARR{
                 pixVal[2] = arrColor[color].val[2];
                 for( int h = 0; h < _mskImage.height; h++){
                     for( int w = 0; w < _mskImage.width; w++){
-                        if( *_mskImage.getRef(w, h) ){
+                        if( *_mskImage.at(w, h) ){
+                            cv_img.at<cv::Vec3b>( h, w ) = pixVal;
+                        }
+                    }
+                }
+            };
+            void drawMask( const Image<unsigned char>& _mskImage, cv::Vec3b &pixVal ){
+                if( !flg_update ){ updateCVImage(); flg_update = 1; }
+                for( int h = 0; h < _mskImage.height; h++){
+                    for( int w = 0; w < _mskImage.width; w++){
+                        if( *_mskImage.at(w, h) ){
                             cv_img.at<cv::Vec3b>( h, w ) = pixVal;
                         }
                     }
@@ -440,8 +452,8 @@ namespace MLARR{
 				int h_pst = -1;				
 				for(int w = 0; w < this->plot.width-1; w++){
 					for( int h = 0; h < this->plot.height; h++){
-						h_pre = *(this->srcImg.getRef( w, h )) == 0 ? h : h_pre;
-						h_pst = *(this->srcImg.getRef( w+1, h )) == 0 ? h : h_pst;
+						h_pre = *(this->srcImg.at( w, h )) == 0 ? h : h_pre;
+						h_pst = *(this->srcImg.at( w+1, h )) == 0 ? h : h_pst;
 					}
 					if( h_pre > 0 && h_pst > 0 ){
 						cv::line(imgTemp, cvPoint( w, h_pre ), cvPoint( w+1, h_pst), strColor[black] );

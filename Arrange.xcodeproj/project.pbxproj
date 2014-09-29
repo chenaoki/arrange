@@ -157,13 +157,13 @@
 		66556B271966D44700AF8E8F /* Basic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Basic.h; sourceTree = "<group>"; };
 		66556B281966D44700AF8E8F /* Electrode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Electrode.h; sourceTree = "<group>"; };
 		66556B291966D61300AF8E8F /* Engine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Engine.h; sourceTree = "<group>"; };
-		66556B2A1966D6DE00AF8E8F /* Analyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Analyzer.h; sourceTree = "<group>"; };
-		66556B2B1966D71900AF8E8F /* MovieAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MovieAnalyzer.h; sourceTree = "<group>"; };
+		66556B2A1966D6DE00AF8E8F /* Analyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 2; path = Analyzer.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		66556B2C1966D8D800AF8E8F /* coefs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = coefs.cpp; sourceTree = "<group>"; };
 		66556B2D1966D8D800AF8E8F /* coefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = coefs.h; sourceTree = "<group>"; };
 		66556B2E1966D8D800AF8E8F /* IO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IO.h; sourceTree = "<group>"; };
 		66556B301966D8FC00AF8E8F /* VectorAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VectorAnalyzer.h; sourceTree = "<group>"; };
 		66660B3F198FD69000AA108F /* Optical.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Optical.h; sourceTree = "<group>"; };
+		6680A31D19CE527B005D2DD5 /* Hilbert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Hilbert.h; sourceTree = "<group>"; };
 		669CF12819931DEF00A60095 /* AVTCamera.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AVTCamera.h; sourceTree = "<group>"; };
 		66C429EF19B071A60066D2E1 /* CameraFactory.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CameraFactory.hpp; sourceTree = "<group>"; };
 		66D5C9A619931EB200171BA3 /* AVTCamera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AVTCamera.cpp; sourceTree = "<group>"; };
@@ -361,7 +361,7 @@
 			children = (
 				66556B2A1966D6DE00AF8E8F /* Analyzer.h */,
 				66660B3F198FD69000AA108F /* Optical.h */,
-				66556B2B1966D71900AF8E8F /* MovieAnalyzer.h */,
+				6680A31D19CE527B005D2DD5 /* Hilbert.h */,
 				66556B301966D8FC00AF8E8F /* VectorAnalyzer.h */,
 			);
 			name = Analyzer;
