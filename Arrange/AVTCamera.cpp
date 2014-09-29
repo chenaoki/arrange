@@ -133,7 +133,9 @@ void _STDCALL FrameDoneCB(tPvFrame* pFrame)
 
         cam->lock();
         // convertRGB24toGray(static_cast<unsigned char*>(pFrame->ImageBuffer), cam->data, cam->width, cam->height);
-        cam->data = static_cast<unsigned char*>(pFrame->ImageBuffer);
+        for( int i = 0; i < cam->nPix(); i++ ){
+            cam->data[i] = static_cast<unsigned char*>(pFrame->ImageBuffer) + i;
+        }
         cam->unlock();
         
         if(pFrame->Status != ePvErrCancelled){
@@ -199,7 +201,10 @@ AVTCamera::AVTCamera(const std::string& paramPath)
     
     // delete inner buffer and set up pointer
     delete this->data;
-    this->data = new unsigned char[width*height];    
+    this->data = new unsigned char*[this->nPix()];
+    for( int i = 0; i < this->nPix(); i++ ){
+        this->data[i] = new unsigned char;
+    }
 
     initLock(&(this->mlock));
     
