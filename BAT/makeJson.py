@@ -2,6 +2,10 @@
 
 import os
 
-for i in range(5,40):
-    os.system("sed -e \'s/XXXX/" + str(i+1).zfill(4) + "/g\' ./ArrangeParam.json > " + str(i+1).zfill(4) + ".json")
+#ids = [14,34,38]
+ids = [8]
+#ids = range(1,37)
+
+for i in ids:
+    os.system("sed -e \'s/XXXX/" + str(i).zfill(4) + "/g\' ./ArrangeParam.json > " + str(i).zfill(4) + ".json")
 
