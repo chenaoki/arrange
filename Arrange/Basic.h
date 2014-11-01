@@ -184,6 +184,26 @@ namespace MLARR{
 			void setValue( const int w, const int h, const T& value){
 				*(this->data[ getPos(w,h) ]) = value;
 			};
+            T maxValue(void){
+                T ret = *this->data[getPos(0,0)];
+                for(int h = 0; h < this->height; h++){
+                    for(int w = 0; w < this->width; w++){
+                        T val = *this->data[ getPos(w,h) ];
+                        ret = val > ret ? val : ret;
+                    }
+                }
+                return ret;
+            };
+            T minValue(void){
+                T ret = *this->data[getPos(0,0)];
+                for(int h = 0; h < this->height; h++){
+                    for(int w = 0; w < this->width; w++){
+                        T val = *this->data[ getPos(w,h) ];
+                        ret = val < ret ? val : ret;
+                    }
+                }
+                return ret;
+            };
 			cv::Mat* clone(void) const{
 				int type = CV_8U;
 				if( typeid(T) ==  typeid(unsigned char))   type = CV_8U;

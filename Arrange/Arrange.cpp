@@ -43,12 +43,9 @@ int main(int argc, char* argv[])
 		if( engine == std::string("optical")) {
             eng = dynamic_cast<Engine*>(new OpticalOfflineAnalysisEngine<unsigned short>(paramFile));
 		}else if( engine == string("feedback") ){
-            /* create camera object */
-            picojson::object obj = MLARR::IO::loadJsonParam(paramFile) ;
-            string camType = obj["camType"].get<std::string>();
-            if( camType == "avt" ){
-                eng = dynamic_cast<Engine*>(new FeedbackEngine<unsigned char>(paramFile));
-            }
+            eng = dynamic_cast<Engine*>(new FeedbackEngine<unsigned char>(paramFile));
+        }else if( engine == string("fbsim") ){
+            eng = dynamic_cast<Engine*>(new FeedbackEngine<unsigned short>(paramFile));
         }else if( engine == string("mssetup")){
             eng = dynamic_cast<Engine*>(new MultiStimSetupEngine(paramFile));
         }else{

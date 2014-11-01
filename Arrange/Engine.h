@@ -24,8 +24,20 @@ namespace MLARR{
         public:
             Engine(std::string& paramFilePath)
             {
+                /* load param */
                 picojson::object obj = MLARR::IO::loadJsonParam(paramFilePath) ;
                 dstDir  = obj["dstDir"].get<std::string>();
+                
+                /* make output directory */
+                std::string temp = this->dstDir;
+                mkdir( temp.c_str() , 0777);
+                
+                /* copy parameter file to the dst directory. */
+                ifstream ifs(paramFilePath.c_str());
+                ofstream ofs((this->dstDir+string("/param.json")).c_str());
+                ofs << ifs.rdbuf();
+                ifs.close(); ofs.close();
+
             };
             
             virtual ~Engine(void){};

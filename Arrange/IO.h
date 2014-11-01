@@ -347,7 +347,11 @@ namespace MLARR{
             void drawRect( int left, int top, int right, int bottom, int color ){
 				if( !flg_update ){ updateCVImage(); flg_update = 1; }
                 cv::rectangle(cv_img, cv::Point(left, top), cv::Point(right, bottom), arrColor[color]);
-            }
+            };
+            void drawRect( int x, int y, int rad, int color){
+                if( !flg_update ){ updateCVImage(); flg_update = 1; }
+                cv::rectangle(cv_img, cv::Point(x - rad, y - rad), cv::Point(x + rad, y + rad), arrColor[color]);
+            };
             void drawMask( const Image<unsigned char>& _mskImage, int color ){
                 if( !flg_update ){ updateCVImage(); flg_update = 1; }
                 cv::Vec3b pixVal;

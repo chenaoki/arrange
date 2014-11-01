@@ -33,7 +33,7 @@ namespace MLARR{
             MLARR::Basic::Image<unsigned char>& getBin(void){
 				for( int h = 0; h < this->height ; h++){
 					for( int w = 0; w < this->width; w++){
-						if( *(this->im_roi.at(w, h)) && *(this->srcImg.at(w, h)) > 0 ){
+						if( *(this->im_roi.at(w, h)) && *(this->at(w, h)) > 0 ){
                             this->im_bin.setValue(w, h, 1);
                         }else{
                             this->im_bin.setValue(w, h, 0);
@@ -146,13 +146,21 @@ namespace MLARR{
             {};
             ~RangeDetector(void){};
         public:
+            void setRange( T min, T max){
+                _min = min;
+                _max = max;
+                return;
+            };
             void execute(void){
                 this->clear();
                 for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
                         if( *(this->im_roi.at(w, h)) ){
                             T val = *(this->srcImg.at(w, h));
-                            this->setValue( w, h, val <= _max && val >= _min ? 1 : 0 );
+                            // this->setValue( w, h, val <= _max && val >= _min ? 1 : 0 );
+                            if( val <= _max && val >= _min ){
+                                this->setValue( w, h, 1);
+                            }
                         }
                     }
                 }
@@ -359,7 +367,10 @@ namespace MLARR{
 			explicit BinaryAdjacent( MLARR::Basic::Image<T>& _srcImg, const MLARR::Basic::Image<T>& _cmpImg, int _winSize, T _thre = 0 )
             : ImageAnalyzer<T, T>( _srcImg.height, _srcImg.width, 0, _srcImg), cmpImg(_cmpImg), winSize(_winSize), thre(_thre){
                 if( _srcImg.width != _cmpImg.width || _srcImg.height != _cmpImg.height ){
-                    throw "error : comparison image have invalid size.";
+                    throw string("error : comparison image have invalid size.");
+                }
+                if( winSize <= 0 ){
+                    throw string("error : invalid winsize for BinaryAdjacent");
                 }
 			};
 			~BinaryAdjacent(void){};
@@ -658,12 +669,13 @@ namespace MLARR{
         
 
         
-        template< typename T_IN, class SHRINKER, class ANALYZER>
+        template< class SHRINKER, class ANALYZER, typename T_IN, typename T_OUT >
         class PyramidDetector : public ImageAnalyzer< T_IN, unsigned char >{
         public:
             int pyrNum;
             std::vector< SHRINKER* > vec_shrinker;
             std::vector< ANALYZER* > vec_analyzer;
+            std::vector< MLARR::Analyzer::ImageDoubler<T_OUT>* > vec_doubler;
         protected:
         public:
             explicit PyramidDetector(MLARR::Basic::Image<T_IN>& _src, ANALYZER* root, int _pyrNum)
@@ -680,6 +692,8 @@ namespace MLARR{
                            new ANALYZER(
                                 *dynamic_cast<MLARR::Basic::Image<T_IN>*>(vec_shrinker.back()),
                                 *dynamic_cast<ANALYZER*>(vec_analyzer.back())));
+                    vec_doubler.push_back( new MLARR::Analyzer::ImageDoubler<T_OUT>( *vec_analyzer.back() ) );
+
                 }
             };
             
@@ -696,8 +710,16 @@ namespace MLARR{
             void setRoi( const MLARR::Basic::Image<unsigned char>& _roi ){
                 vec_analyzer[0]->setRoi( _roi );
                 for( int i = 1; i < vec_analyzer.size(); i++){
+                    
                     ImageShrinker<unsigned char> imgHalf( vec_analyzer[ i-1 ]->getRoi() );
                     imgHalf.execute();
+                    /*
+                    IO::Display<unsigned char> disp_roi_org("roi org",vec_analyzer[ i-1 ]->getRoi(),1,0,IO::colMap_gray);
+                    IO::Display<unsigned char> disp_roi_dst("roi dst",imgHalf,1,0,IO::colMap_gray);
+                    disp_roi_org.show();
+                    disp_roi_dst.show();
+                    cvWaitKey(-1);
+                    */
                     vec_analyzer[i]->setRoi( imgHalf );
                 }
                 
@@ -712,41 +734,60 @@ namespace MLARR{
                 }
                 for( int i = static_cast<int>(vec_analyzer.size()) - 1; i > 0 ; i--){
                     vec_analyzer[i]->execute();
-                    MorphImage<unsigned char> morph(vec_analyzer[i]->getBin(), 1);
-                    morph.execute();
-                    vec_analyzer[i-1]->setRoi( morph );
+                    vec_doubler[i-1]->execute();
+                    //MorphImage<unsigned char> morph(vec_analyzer[i]->getBin(), 1);
+                    //morph.execute();
+                    //vec_analyzer[i-1]->setRoi( morph );
+                    vec_analyzer[i-1]->setRoi( vec_doubler[i-1]->getBin() );
                 }
                 vec_analyzer[0]->execute();
                 
                 *dynamic_cast<Image<unsigned char>*>(this) = *dynamic_cast<Image<unsigned char>*>(vec_analyzer[0]);
                 
-                /* merge binary results */
-                /*
-                this->im_bin = vec_analyzer[0]->getBin();
+            };
+            
+            void mergeSum(void){
+                
+                *(dynamic_cast<Image<unsigned char>*>(this)) = *vec_analyzer[0];
                 for( int i = 1; i < vec_analyzer.size(); i++){
-                    int rate = pow(2,i);
+                    int size = pow(2,i);
                     ANALYZER* ptr = vec_analyzer[i];
                     for( int h = 0; h < ptr->height; h++){
                         for( int w = 0; w < ptr->width; w++){
-                            int sum = 0;
-                            if( ptr->getBin().at(w,h) ){
-                                for( int n = 0; n < rate; n++){
-                                    for( int m = 0; m < rate; m++){
-                                        sum += static_cast<int>(*this->im_bin.at(w+m, h+n));
-                                    }
-                                }
-                                if( sum == 0 ){
-                                    for( int n = 0; n < rate; n++){
-                                        for( int m = 0; m < rate; m++){
-                                            this->im_bin.setValue(w+m, h+n, 1);
-                                        }
-                                    }
+                            for( int n = 0; n < size; n++){
+                                for( int m = 0; m < size; m++){
+                                    *this->at(w*size+m,h*size+n) += *ptr->at(w,h);
                                 }
                             }
                         }
                     }
-                }*/
+                }
                 
+            };
+            
+            void mergeFinest(void){
+                std::vector< Image<unsigned char> > vecBuf;
+                vecBuf.push_back( *vec_analyzer.back() );
+                for( int i = static_cast<int>(vec_analyzer.size()) -  2; i >= 0; i--){
+                    ImageDoubler<unsigned char> imgDouble(vecBuf.back());
+                    BinaryAnd<unsigned char> imgAnd(imgDouble, *vec_analyzer[i]);
+                    imgDouble.execute();
+                    imgAnd.execute();
+                    bool flg = false;
+                    for( int h = 0; h < imgAnd.height; h++){
+                        for( int w = 0; w < imgAnd.width; w++){
+                            if(*imgAnd.at(w,h)){
+                                flg = true;
+                            }
+                        }
+                    }
+                    if( flg ){
+                        vecBuf.push_back(imgAnd);
+                    }else{
+                        vecBuf.push_back(imgDouble);
+                    }
+                }
+                *dynamic_cast< Image<unsigned char>*>(this) = vecBuf.back();
             };
         };
         

@@ -251,29 +251,36 @@ namespace MLARR{
 		class SimplePhaseSingularityAnalyzer : public ImageAnalyzer<T, unsigned char>{
         public:
             SimplePhaseAnalyzer<T> imgSP;
-		
+            int winSize;
         public:
 
-			explicit SimplePhaseSingularityAnalyzer( MLARR::Basic::Image<T>& _srcImg, std::vector<double> _coef)
-            : ImageAnalyzer<T, unsigned char>( _srcImg.height, _srcImg.width, 0, dynamic_cast<MLARR::Basic::Image<T>&>(_srcImg)), imgSP(_srcImg, _coef)
+			explicit SimplePhaseSingularityAnalyzer( MLARR::Basic::Image<T>& _srcImg, std::vector<double> _coef, int _winSize)
+            : ImageAnalyzer<T, unsigned char>( _srcImg.height, _srcImg.width, 0, dynamic_cast<MLARR::Basic::Image<T>&>(_srcImg)), imgSP(_srcImg, _coef), winSize(_winSize)
             {};
             
             explicit SimplePhaseSingularityAnalyzer(MLARR::Basic::Image<T>& _srcImg, SimplePhaseSingularityAnalyzer<T>& pre)
-            : ImageAnalyzer<T, unsigned char>( _srcImg.height, _srcImg.width, 0, dynamic_cast<MLARR::Basic::Image<T>&>(_srcImg)), imgSP(_srcImg, pre.imgSP.coef)
+            : ImageAnalyzer<T, unsigned char>( _srcImg.height, _srcImg.width, 0, dynamic_cast<MLARR::Basic::Image<T>&>(_srcImg)), imgSP(_srcImg, pre.imgSP.coef), winSize(pre.winSize)
             {};
             
 			~SimplePhaseSingularityAnalyzer(void){};
+            
+            void setRoi(const MLARR::Basic::Image<unsigned char>& src){
+                ImageAnalyzer<T, unsigned char>::setRoi(src);
+                imgSP.setRoi(src);
+            };
+            
+            void setWinSize(int _winSize) { winSize = _winSize; };
 			
             void execute(void){
 				this->clear(0);
                 imgSP.execute();
-				for( int h = 1; h < this->height - 1; h++){
-					for( int w = 1; w < this->width - 1; w++){
+				for( int h = 0; h <= this->height - winSize; h++){
+					for( int w = 0; w <= this->width - winSize; w++){
 						if( *(this->im_roi.at(w, h)) ){
 							int flag_on[5] = {1,1,1,1,1};
 							int flag[5] = {1,0,0,0,0};
-							for(int i = -1; i <=1 ; i++){
-								for(int j = -1; j <=1; j++){
+							for(int i = 0; i < winSize ; i++){
+								for(int j = 0; j < winSize; j++){
 									char psVal = *this->imgSP.at(w+i, h+j);
 									if( psVal >= 0 && psVal <= 4){
 										flag[psVal] = 1;
@@ -281,7 +288,7 @@ namespace MLARR{
 								}
 							}
 							if( 0 == memcmp( flag_on , flag , sizeof(int) * 5 )){
-								this->setValue( w, h, 1 );
+								this->setValue( w + winSize / 2, h + winSize / 2, 1 );
 							}
 						}
 					}
@@ -331,16 +338,19 @@ namespace MLARR{
         
         template <class T>
         class DivPhaseSingularityAnalyzer : public ImageAnalyzer<T, unsigned char>{
-        private:
+        public:
             int winSize;
-            T thre;
+            Image<double> imgDiv;
+            SpacialFilter<double> imgDivFil;
         public:
             
-            explicit DivPhaseSingularityAnalyzer( MLARR::Basic::Image<T>& _src, int _winSize, T _thre)
-            :ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), winSize( _winSize ), thre(_thre) {};
+            explicit DivPhaseSingularityAnalyzer( MLARR::Basic::Image<T>& _src)
+            :ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), winSize( 15 ),
+            imgDiv(_src.height, _src.width, 0), imgDivFil(imgDiv, 5,5, coefficients.vec_gaussian_5x5){};
             
             DivPhaseSingularityAnalyzer( MLARR::Basic::Image<T>& _src, DivPhaseSingularityAnalyzer<T>& pre)
-            : ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), winSize( pre.winSize ), thre(pre.thre){};
+            : ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), winSize( 15 ),
+            imgDiv(_src.height, _src.width, 0), imgDivFil(imgDiv, 5,5, coefficients.vec_gaussian_5x5){};
             
             ~DivPhaseSingularityAnalyzer(void){};
             
@@ -348,6 +358,7 @@ namespace MLARR{
             void execute(void){
                 
                 dynamic_cast<MLARR::Basic::Image<unsigned char>*>(this)->clear(0);
+                
 				for( int h = 0; h <= this->height - winSize; h++){
 					for( int w = 0; w <= this->width - winSize; w++){
                         int h_c = h + ( winSize - 1 )/2;
@@ -355,23 +366,51 @@ namespace MLARR{
                         
 						if( *(this->im_roi.at(w_c, h_c)) ){
                             
-                            double base = *(this->srcImg.at(w_c, h_c));
-                            
 							// evaluate div
+                            int cnt = 0;
                             double div = 0.0;
+                            double base = *(this->srcImg.at(w_c, h_c));
 							for( int i = 0; i < winSize; i++){
 								for( int j = 0; j < winSize; j++){
-                                    double diff = (*(this->srcImg.at(w+i, h+j))) - base;
-                                    diff = phaseComplement( diff );
-									div += diff * diff;
+                                    if( *(this->im_roi.at(w+i, h+j)) ){
+                                        double diff = (*(this->srcImg.at(w+i, h+j))) - base;
+                                        diff = phaseComplement( diff );
+                                        div += diff * diff;
+                                        cnt++;
+                                    }
 								}
 							}
-                            div = sqrt( div ) / static_cast<double>( winSize * winSize );
-                            div /= M_PI;
-							this->setValue(w_c, h_c, static_cast<T>(div) > this->thre ? 1 : 0);
+                            div = cnt ? sqrt( div ) / cnt : 0;
+							this->imgDiv.setValue(w_c, h_c, div);
+                            
 						}
 					}
 				}
+                
+                //imgDivFil.execute();
+                
+                double divMax = DBL_MIN;
+                double divMin = DBL_MAX;
+                for( int h = 0; h <= this->height - winSize; h++){
+                    for( int w = 0; w <= this->width - winSize; w++){
+                        int h_c = h + ( winSize - 1 )/2;
+                        int w_c = w + ( winSize - 1 )/2;
+                        double div = *imgDiv.at(w_c, h_c);
+                        divMax = divMax < div ? div : divMax;
+                        divMin = divMin > div ? div : divMin;
+                    }
+                }
+                double thre = divMin + (divMax - divMin) * 0.95;
+                for( int h = 0; h <= this->height - winSize; h++){
+                    for( int w = 0; w <= this->width - winSize; w++){
+                        int h_c = h + ( winSize - 1 )/2;
+                        int w_c = w + ( winSize - 1 )/2;
+                        double div = *imgDiv.at(w_c, h_c);
+                        imgDiv.setValue(w_c, h_c, (div - divMin) / (divMax - divMin) ); // normalize
+                        this->setValue(w_c, h_c, static_cast<T>(div) > thre ? 1 : 0); // Binarize
+                    }
+                }
+                
             };
         };
         
@@ -474,12 +513,14 @@ namespace MLARR{
                                         int y = h + j;
                                         if( x >= 0 && x < this->width && y >=0 && y < this->height){
                                             if(*(this->imgMask.at(x, y)) == 0 && *( this->im_roi.at(x,y) ) != 0){
+                                            //if(*(this->imgMask.at(x, y)) == 0 ){
                                                 v.push_back( static_cast<double>( phaseComplement( *(this->srcImg.at(x, y)) - val )));
                                             }
                                         }
                                     }
                                 }
                                 if( v.size() >= minPixNum ){
+                                    // select median difference
                                     std::nth_element( v.begin(), v.begin() + v.size() / 2, v.end() );
                                     *this->at(w, h) = phaseComplement( val + v[ v.size() / 2] );
                                     break;

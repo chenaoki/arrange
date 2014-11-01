@@ -65,6 +65,8 @@ namespace MLARR{
             int psp_closeRoi;
             int psp_medianSize;
             int psp_adjacentSize;
+            double psp_phaseFrontMean;
+            double psp_phaseFrontRange;
             int psp_isoMax;
             int psp_isoInterval;
             double psp_roiMarginTop;
@@ -77,16 +79,8 @@ namespace MLARR{
             OpticalOfflineAnalysisEngine(std::string& paramFilePath) : Engine(paramFilePath), cam(NULL), _electrodes(), vec_menu()
             {
                 
-                /* copy parameter file to the dst directory. */
-                ifstream ifs(paramFilePath.c_str());
-                ofstream ofs((this->dstDir+string("/param.json")).c_str());
-                ofs << ifs.rdbuf();
-                ifs.close(); ofs.close();
-                
                 /* make output directories */
-                std::string temp = this->dstDir;
-                mkdir( temp.c_str() , 0777);
-                temp = this->dstDir + "/raw";
+                std::string temp = this->dstDir + "/raw";
                 mkdir( temp.c_str() , 0777);
                 temp = this->dstDir + "/raw/max";
                 mkdir( temp.c_str() , 0777);
@@ -120,7 +114,9 @@ namespace MLARR{
                 mkdir( temp.c_str() , 0777);
                 
                 /* load parameter file (JSON) */
-                picojson::object obj = MLARR::IO::loadJsonParam(paramFilePath) ;
+                picojson::object obj = MLARR::IO::loadJsonParam(paramFilePath);
+                camType = obj["camType"].get<std::string>();
+                
                 picojson::object& opt = obj["opticalOffline"].get<picojson::object>();
                 picojson::array& menu = opt["menu"].get<picojson::array>();
                 for( picojson::array::iterator it = menu.begin(); it != menu.end(); it++){
@@ -141,6 +137,8 @@ namespace MLARR{
                 psp_closeRoi = atoi( psp["closeRoi"].to_str().c_str() );
                 psp_medianSize = atoi( psp["medianFilterSize"].to_str().c_str());
                 psp_adjacentSize = atoi( psp["adjacentSize"].to_str().c_str());
+                psp_phaseFrontMean = atof( psp["phaseFrontMean"].to_str().c_str() );
+                psp_phaseFrontRange = atof( psp["phaseFrontRange"].to_str().c_str() );
                 picojson::object& psp_iso = psp["isochrone"].get<picojson::object>();
                 psp_isoMax = atoi( psp_iso["max"].to_str().c_str());
                 psp_isoInterval = atoi( psp_iso["interval"].to_str().c_str());
@@ -152,7 +150,6 @@ namespace MLARR{
                 
                 
                 /* create camera object */
-                camType = obj["camType"].get<std::string>();
                 if( NULL == ( this->cam = static_cast<RawFileCamera<T>*>( MLARR::IO::CameraFactory::create(this->camType, paramFilePath)))){
                     throw "failed to create camera object";
                 }
@@ -225,6 +222,7 @@ namespace MLARR{
                 /* Analyzer */
                 std::vector<ImageShrinker<double>*> vec_optComp;
                 std::vector<ImageShrinker<unsigned char>*> vec_roiComp;
+                Image<unsigned char> *imgROI = NULL;
                 int tmpWidth = camOpt.width;
                 while( tmpWidth > hbt_size ){
                     if( vec_optComp.size() ){
@@ -254,10 +252,8 @@ namespace MLARR{
                 Display<double> disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
                 Display<double> disp_hilbert("hilbert", imgComp, M_PI, -M_PI, colMap_hsv);
                 
-                
                 /* ROI setting */
                 camRoi.capture();
-                Image<unsigned char> *imgROI = NULL;
                 if( vec_roiComp.size()){
                     for( vector< ImageShrinker<unsigned char>*>::iterator it = vec_roiComp.begin(); it != vec_roiComp.end(); it++ ){
                         (*it)->execute();
@@ -270,6 +266,8 @@ namespace MLARR{
                 imgComp.setRoi( *imgROI );
                 Dumper<unsigned char> dump_roi_hbt( *imgROI, this->dstDir, fmt_raw_roh);
                 dump_roi_hbt.dump( camRoi.f_tmp );
+                Display<unsigned char> disp_roi("roi", *imgROI, 1, 0, colMap_gray);
+                disp_roi.show();
                 
                 /* Main loop */
                 camOpt.initialize();
@@ -327,26 +325,32 @@ namespace MLARR{
                 /* Analyzer */
                 MorphImage<unsigned char>            imgRoiOpen( camRoi, psp_closeRoi);
                 MorphImage<unsigned char>            imgRoiClose( imgRoiOpen, -2 * psp_closeRoi);
-                MedianFilter<double>                 imgMed( camPhase, psp_medianSize);
-                // PhaseMedianFilter<double>            imgMed( camPhase, psp_medianSize);
-                PhaseSpacialFilter<double>           imgFil( imgMed, 5,5, coefficients.vec_gaussian_5x5);
-                PhaseRangeDetector<double>           imgFront( imgFil, M_PI * (1 - 1/8), M_PI * 1/8);
-                PhaseRangeDetector<double>           imgTail ( imgFil, 0, M_PI / 64);
-                PhaseRangeDetector<double>           imgExc(imgFil, - M_PI / 2, M_PI / 2);
+                //PhaseMedianFilter<double>            imgMed( camPhase, psp_medianSize);
+                MedianFilter<double>                 imgMed( camPhase, psp_closeRoi );
+                PhaseMedianFilter<double>            imgFil( imgMed, psp_medianSize );
+                // PhaseSpacialFilter<double>           imgFil( imgMed, 5,5, coefficients.vec_gaussian_5x5);
+                // PhaseSpacialFilter<double>           imgFil_pre( camPhase, 5,5, coefficients.vec_gaussian_5x5);
+                // PhaseSpacialFilter<double>           imgFil( imgFil_pre, 5,5, coefficients.vec_gaussian_5x5);
+                PhaseRangeDetector<double>           imgFront( imgFil, M_PI * psp_phaseFrontMean, psp_phaseFrontRange);
+                PhaseRangeDetector<double>           imgTail ( imgFil, phaseComplement(M_PI * (1   + psp_phaseFrontMean)), psp_phaseFrontRange );
+                PhaseRangeDetector<double>           imgExc(   imgFil, phaseComplement(M_PI * (0.5 + psp_phaseFrontMean)), M_PI / 2);
                 MorphImage<unsigned char>            imgFrontOpen(imgFront, 5);
                 MorphImage<unsigned char>            imgTailOpen (imgTail, 5);
                 MorphImage<unsigned char>            imgExcOpen( imgExc, 5 );
                 MorphImage<unsigned char>            imgFrontClose(imgFrontOpen, -4);
                 MorphImage<unsigned char>            imgTailClose(imgTailOpen, -4);
                 MorphImage<unsigned char>            imgExcClose( imgExcOpen, -4 );
-                BinaryAdjacent<unsigned char>        imgAdj( imgFrontClose, imgTailClose, psp_adjacentSize);
-                LabelImage                           imgLabel(dynamic_cast<Image<unsigned char>&>(imgAdj));
+                
                 PositiveFilter<unsigned char>        filPos(0);
                 ActivationTimeMap<
                     unsigned char,
                     PositiveFilter<unsigned char> >  imgActTime(imgFrontClose, filPos, hbt_minPeakDistance);
                 MedianFilter<unsigned short>         imgATMFil( imgActTime, 5 );
                 Image<unsigned char>                 imgIso( imgFront.height, imgFront.width, 0 );
+                
+                BinaryAdjacent<unsigned char>        imgAdj( imgFrontClose, imgTailClose, psp_adjacentSize);
+                DivPhaseSingularityAnalyzer<double>  imgDivPSP( imgFil );
+                LabelImage                           imgLabel(dynamic_cast<Image<unsigned char>&>(imgDivPSP));
                 
                 /* ROI setting */
                 camRoi.capture();
@@ -366,11 +370,12 @@ namespace MLARR{
                         }
                     }
                 }
-                imgFront.setRoi(imgRoiClose);
-                imgTail.setRoi(imgRoiClose);
-                imgExc.setRoi(imgRoiClose);
-                imgAdj.setRoi( imgRoiClose );
+                imgFront.setRoi  ( imgRoiClose );
+                imgTail.setRoi   ( imgRoiClose );
+                imgExc.setRoi    ( imgRoiClose );
+                imgAdj.setRoi    ( imgRoiClose );
                 imgActTime.setRoi( imgRoiClose );
+                imgDivPSP.setRoi ( imgRoiClose );
                 
                 /* Display */
                 Display<double>         disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
@@ -378,6 +383,7 @@ namespace MLARR{
                 Display<unsigned char>  dispExc("excitable gap", imgExc, 1, 0, colMap_gray);
                 Display<unsigned short> disp_atm("activation time", imgATMFil, psp_isoMax, 0, colMap_gray);
                 Display<unsigned char>  dispIso("Isochronal", imgIso, 1, 0, colMap_gray);
+                Display<double>         dispDivMax("Phase div max", imgDivPSP.imgDiv, 1.0, 0, colMap_gray);
 
                 /* Log file */
                 sprintf( buf, fmt_log_psp.c_str(), this->dstDir.c_str() );
@@ -392,6 +398,7 @@ namespace MLARR{
                     if( camPhase.f_tmp - camPhase.f_start <= hbt_minPeakDistance * 4 ) continue;
                     camOpt.capture();
                     imgMed.execute();
+                    //imgFil_pre.execute();
                     imgFil.execute();
                     imgExc.execute();
                     imgFront.execute();
@@ -403,6 +410,7 @@ namespace MLARR{
                     imgTailOpen.execute();
                     imgTailClose.execute();
                     imgAdj.execute();
+                    imgDivPSP.execute();
                     imgLabel.execute();
                     imgActTime.execute();
                     imgATMFil.execute();
@@ -410,22 +418,10 @@ namespace MLARR{
                     
                     /* output PS info.*/
                     ofs << camPhase.getTime() << "," ;
-                    std::vector<MLARR::Basic::Point<double> >::iterator it = imgLabel.vec_ps.begin();
-                    while( it != imgLabel.vec_ps.end() ){
-                        dispExc.drawRect(
-                                          static_cast<int>(it->getX() - 2),
-                                          static_cast<int>(it->getY() - 2),
-                                          static_cast<int>(it->getX() + 2),
-                                          static_cast<int>(it->getY() + 2),
-                                          white);
-                        dispFil.drawRect(
-                                         static_cast<int>(it->getX() - 2),
-                                         static_cast<int>(it->getY() - 2),
-                                         static_cast<int>(it->getX() + 2),
-                                         static_cast<int>(it->getY() + 2),
-                                         white);
+                    for( std::vector<MLARR::Basic::Point<double> >::iterator it = imgLabel.vec_ps.begin(); it != imgLabel.vec_ps.end(); it++ ){
+                        dispExc.drawRect( it->getX(), it->getY(), 2, white );
+                        dispFil.drawRect( it->getX(), it->getY(), 2, white );
                         ofs << it->getX()*hbt_compRate << "," << it->getY()*hbt_compRate << ",";
-                        it++;
                     }
                     ofs << std::endl;
                     
@@ -437,6 +433,7 @@ namespace MLARR{
                     dispExc.drawMask(imgAdj, green);
                     dispExc.show( camPhase.getTime(), red );
                     disp_atm.show();
+                    dispDivMax.show();
                     for( int i = psp_isoInterval; i < psp_isoMax; i+=psp_isoInterval){
                         RangeDetector<unsigned short>        imgWF( imgATMFil, i-1, i+1 );
                         BinaryThinLine<unsigned char>        imgWFLine( imgWF );
@@ -473,10 +470,10 @@ namespace MLARR{
                 ImageShrinker<double> optSh2( dynamic_cast<Image<double>&>(optSh1) );
                 ImageShrinker<double> optSh3( dynamic_cast<Image<double>&>(optSh2) );
                 ImageShrinker<double> optSh4( dynamic_cast<Image<double>&>(optSh3) );
-                SimplePhaseSingularityAnalyzer<double> spsEng1( optSh1, MLARR::Analyzer::coefficients.vec_spFIR );
-                SimplePhaseSingularityAnalyzer<double> spsEng2( optSh2, MLARR::Analyzer::coefficients.vec_spFIR );
-                SimplePhaseSingularityAnalyzer<double> spsEng3( optSh3, MLARR::Analyzer::coefficients.vec_spFIR );
-                SimplePhaseSingularityAnalyzer<double> spsEng4( optSh4, MLARR::Analyzer::coefficients.vec_spFIR );
+                SimplePhaseSingularityAnalyzer<double> spsEng1( optSh1, MLARR::Analyzer::coefficients.vec_spFIR, 5 );
+                SimplePhaseSingularityAnalyzer<double> spsEng2( optSh2, MLARR::Analyzer::coefficients.vec_spFIR, 5 );
+                SimplePhaseSingularityAnalyzer<double> spsEng3( optSh3, MLARR::Analyzer::coefficients.vec_spFIR, 5 );
+                SimplePhaseSingularityAnalyzer<double> spsEng4( optSh4, MLARR::Analyzer::coefficients.vec_spFIR, 5 );
                 
                 ImageDoubler<unsigned char> spsDouble4( spsEng4 );
                 BinaryAnd<unsigned char> sps43( spsEng3, spsDouble4 );
