@@ -20,7 +20,7 @@ OSXV	= -mmacosx-version-min=10.7
 #ARCH	= -m32
 
 # compilation flags
-OPT	= -O3 $(ARCH) $(OSXV) -stdlib=libc++ 
+OPT	= -O3 $(ARCH) $(OSXV) -stdlib=libc++
 
 # compiler version
 #CVER    = 4.2
@@ -56,7 +56,7 @@ EXTRA_LIB = -lpthread -lz
 LJPEG   = -ljpeg
 
 ## libs (shared/static)
-PVLIB   = -lPvAPI
+PVLIB   = libPvAPI.dylib
 SOLIB	= $(EXTRA_LIB) -Bdynamic -lm -lc
 
 ## final compilation flags
@@ -67,14 +67,14 @@ EXE	= Arrange
 
 ## Other Objects
 OBJS = $(OBJ_DIR)/IO.o $(OBJ_DIR)/coefs.o $(OBJ_DIR)/AVTCamera.o $(OBJ_DIR)/Lock.o
-    
+
 sample : $(EXE).cpp $(OBJS)
 	$(CC) $(RPATH) $(TARGET) $(CFLAGS) $(EXE).cpp -o $(EXE) $(SOLIB) $(PVLIB) $(BST_SALIB) $(OBJS)
 
 $(OBJ_DIR)/%.o : %.cpp
 	$(CC) $(CFLAGS) $(VERSION) -c $< -o $@
 
-clean: 
+clean:
 	rm $(OBJ_DIR)/*
 	rm $(EXE)
 

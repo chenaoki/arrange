@@ -209,7 +209,7 @@ namespace MLARR{
                 if( cam ){
                     
                     int cnt = 0;
-                    struct time     val s, t;
+                    struct timeval s, t;
                     bool flgUpdate = false;
                     while ( stop != cam->state ) {
 
