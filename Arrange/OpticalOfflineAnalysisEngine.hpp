@@ -305,7 +305,7 @@ namespace MLARR{
             
             
             /* Phase Singurality Analysis */
-            void phaseSingularityAnalysis(void)
+            void psdetect(void)
             {
                 
                 int hbt_compRate = this->cam->width / hbt_size + ( this->cam->width % hbt_size == 0 ? 0 : 1);
@@ -396,6 +396,114 @@ namespace MLARR{
                 
             };
             
+            void isochronal(void)
+            {
+                
+                int hbt_compRate = this->cam->width / hbt_size + ( this->cam->width % hbt_size == 0 ? 0 : 1);
+                char buf[255];
+                
+                /* Camera */
+                RawFileCamera<double> camOpt(
+                                             this->cam->width, this->cam->height, std::numeric_limits<double>::digits, this->cam->fps,
+                                             this->dstDir, fmt_raw_opt, this->cam->f_start,this->cam->f_skip,this->cam->f_stop );
+                RawFileCamera<double> camPhase(
+                                               this->cam->width/hbt_compRate, this->cam->height/hbt_compRate, std::numeric_limits<double>::digits, this->cam->fps,
+                                               this->dstDir, fmt_raw_hbt, this->cam->f_start,this->cam->f_skip,this->cam->f_stop );
+                RawFileCamera<unsigned char> camRoi(
+                                                    this->cam->width/hbt_compRate, this->cam->height/hbt_compRate, std::numeric_limits<char>::digits, this->cam->fps,
+                                                    this->dstDir, fmt_raw_roh, 1,1,1);
+                
+                /* Analyzer */
+                MorphImage<unsigned char>            imgRoiOpen( camRoi, psp_closeRoi);
+                MorphImage<unsigned char>            imgRoiClose( imgRoiOpen, -2 * psp_closeRoi);
+                MedianFilter<double>                 imgMed( camPhase, psp_closeRoi );
+                PhaseMedianFilter<double>            imgFil( imgMed, psp_medianSize );
+                PhaseRangeDetector<double>           imgFront( imgFil, M_PI * psp_phaseFrontMean, psp_phaseFrontRange);
+                MorphImage<unsigned char>            imgFrontOpen(imgFront, 5);
+                MorphImage<unsigned char>            imgFrontClose(imgFrontOpen, -4);
+                PositiveFilter<unsigned char>        filPos(0);
+                ActivationTimeMap<
+                unsigned char,
+                PositiveFilter<unsigned char> >  imgActTime(imgFrontClose, filPos, hbt_minPeakDistance);
+                MedianFilter<unsigned short>         imgATMFil( imgActTime, 5 );
+                Image<unsigned char>                 imgIso( imgFront.height, imgFront.width, 0 );
+                
+                /* ROI setting */
+                camRoi.capture();
+                imgRoiOpen.execute();
+                imgRoiClose.execute();
+                for( int j = 0; j < camRoi.height; j++ ){
+                    if( j <= camRoi.height * psp_roiMarginTop || j >= camRoi.height * (1 - psp_roiMarginBottom)) {
+                        for( int i = 0; i < camRoi.width; i++ ){
+                            imgRoiClose.setValue( i, j, 0);
+                        }
+                    }
+                }
+                for( int i = 0; i < camRoi.width; i++ ){
+                    if( i <= camRoi.height * psp_roiMarginLeft || i >= camRoi.height * (1 - psp_roiMarginRight)) {
+                        for( int j = 0; j < camRoi.height; j++ ){
+                            imgRoiClose.setValue( i, j, 0);
+                        }
+                    }
+                }
+                imgFront.setRoi  ( imgRoiClose );
+                imgActTime.setRoi( imgRoiClose );
+                
+                /* Display */
+                Display<double>         disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
+                Display<double>         dispFil("Filtered Phase Map", imgFil, M_PI, -M_PI, colMap_hsv);
+                Display<unsigned short> disp_atm("activation time", imgATMFil, psp_isoMax, 0, colMap_gray);
+                Display<unsigned char>  dispIso("Isochronal", imgIso, 1, 0, colMap_gray);
+                
+                /* Log file */
+                sprintf( buf, fmt_log_psp.c_str(), this->dstDir.c_str() );
+                ofstream ofs(buf);
+                if( !ofs ) throw "failed to open file with format " + fmt_log_psp;
+                
+                /* Main loop */
+                camPhase.initialize();
+                while( stop != camPhase.state && error != camPhase.state ){
+                    
+                    camPhase.capture();
+                    if( camPhase.f_tmp - camPhase.f_start <= hbt_minPeakDistance * 4 ) continue;
+                    camOpt.capture();
+                    imgMed.execute();
+                    imgFil.execute();
+                    imgFront.execute();
+                    imgFrontOpen.execute();
+                    imgFrontClose.execute();
+                    imgActTime.execute();
+                    imgATMFil.execute();
+                    imgIso.clear(0);
+                    
+                    /* show images.*/
+                    disp_opt.show( camPhase.getTime(), red);
+                    dispFil.show( camPhase.getTime(), red);
+                    disp_atm.show();
+                    for( int i = psp_isoInterval; i < psp_isoMax; i+=psp_isoInterval){ // draw isochronal lines
+                        RangeDetector<unsigned short>        imgWF( imgATMFil, i-1, i+1 );
+                        BinaryThinLine<unsigned char>        imgWFLine( imgWF );
+                        imgWF.execute();
+                        imgWFLine.execute();
+                        cv::Vec3b color;
+                        IO::brendColor( blue, green, i / static_cast<double>(psp_isoMax), color);
+                        dispIso.drawMask(imgWFLine, color);
+                    }
+                    dispIso.show();
+                    
+                    /* save images */
+                    disp_opt.save(this->dstDir, fmt_jpg_psp, camPhase.getTime());
+                    dispFil.save(this->dstDir, fmt_jpg_hbf, camPhase.getTime());
+                    dispIso.save(this->dstDir, fmt_jpg_iso, camPhase.getTime());
+                    
+                    //cvWaitKey(-1);
+                }
+                
+                ofs.close();
+                
+            };
+
+            
             void SimplePhaseAnalysis(){
                 
                 /* Camera */
@@ -474,6 +582,7 @@ namespace MLARR{
                     vec_menu.push_back("revnorm");
                     vec_menu.push_back("hilbert");
                     vec_menu.push_back("psdetect");
+                    vec_menu.push_back("isochronal");
                 }
                 
                 for( std::vector<std::string>::iterator it = vec_menu.begin(); it != vec_menu.end(); it++ ){
@@ -482,7 +591,9 @@ namespace MLARR{
                     if(*it == "hilbert")
                         hilbertPhase();
                     if(*it == "psdetect")
-                        phaseSingularityAnalysis();
+                        psdetect();
+                    if(*it == "isochronal")
+                        isochronal();
                 }
                 
             };
