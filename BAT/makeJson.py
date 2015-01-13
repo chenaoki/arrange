@@ -3,7 +3,7 @@
 import os
 
 #ids = [14,34,38]
-ids = [8]
+ids = [14]
 #ids = range(1,37)
 
 for i in ids:
