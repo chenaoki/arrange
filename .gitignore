@@ -3,3 +3,4 @@ DerivedData/*
 Arrange.xcodeproj/project.xcworkspace/xcuserdata/*
 Arrange/Arrange
 Arrange/obj/*
+*.json

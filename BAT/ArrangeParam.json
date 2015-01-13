@@ -1,10 +1,10 @@
 {
-	"dstDir" : "/Volumes/TOMII-LAB01/AnalysisResult/20140911-2/C001H001SXXXX",
+	"dstDir" : "/Volumes/TOMII-LAB01/AnalysisResult/20111214-3/C001SXXXX",
 
 	"camType" : "raw_sa4",
 	"rawCamera" : {
-		"srcDir" : "/Volumes/TOMII-LAB01/ExperimentData/20140911-2/C001H001SXXXX",
-		"format" : "%s/C001H001SXXXX%06d.raww",
+		"srcDir" : "/Volumes/TOMII-LAB01/ExperimentData/20111214-3/C001SXXXX",
+		"format" : "%s/c001sXXXX%06d.raww",
 		"size" : 512,
 		"frameRate" : 1000,
 		"frame" : {
@@ -16,18 +16,18 @@
 
 	"opticalOffline" : {
 
-		"menu" : [ "revnorm" ],
+		"menu" : [ "revnorm", "hilbert", "psdetect" ],
 
 		"revnorm" : {
-			"minDelta" : 60
+			"minDelta" : 20
 		},
 
 		"hilbert" : {
-			"size" : 512,
+			"size" : 128,
 			"minPeakDistance" : 5,
 			"filterSize" : 40,
 			"elecCompPix" : 50,
-			"elecImagePath" : "/usr/local/tmp/elecMask_512.bmp"
+			"elecImagePath" : "/usr/local/opt/Arrange/elecMask/20111214-3/128.bmp"
 		},
 
 		"psdetect" : {

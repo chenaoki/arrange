@@ -325,30 +325,8 @@ namespace MLARR{
                 /* Analyzer */
                 MorphImage<unsigned char>            imgRoiOpen( camRoi, psp_closeRoi);
                 MorphImage<unsigned char>            imgRoiClose( imgRoiOpen, -2 * psp_closeRoi);
-                //PhaseMedianFilter<double>            imgMed( camPhase, psp_medianSize);
                 MedianFilter<double>                 imgMed( camPhase, psp_closeRoi );
                 PhaseMedianFilter<double>            imgFil( imgMed, psp_medianSize );
-                // PhaseSpacialFilter<double>           imgFil( imgMed, 5,5, coefficients.vec_gaussian_5x5);
-                // PhaseSpacialFilter<double>           imgFil_pre( camPhase, 5,5, coefficients.vec_gaussian_5x5);
-                // PhaseSpacialFilter<double>           imgFil( imgFil_pre, 5,5, coefficients.vec_gaussian_5x5);
-                PhaseRangeDetector<double>           imgFront( imgFil, M_PI * psp_phaseFrontMean, psp_phaseFrontRange);
-                PhaseRangeDetector<double>           imgTail ( imgFil, phaseComplement(M_PI * (1   + psp_phaseFrontMean)), psp_phaseFrontRange );
-                PhaseRangeDetector<double>           imgExc(   imgFil, phaseComplement(M_PI * (0.5 + psp_phaseFrontMean)), M_PI / 2);
-                MorphImage<unsigned char>            imgFrontOpen(imgFront, 5);
-                MorphImage<unsigned char>            imgTailOpen (imgTail, 5);
-                MorphImage<unsigned char>            imgExcOpen( imgExc, 5 );
-                MorphImage<unsigned char>            imgFrontClose(imgFrontOpen, -4);
-                MorphImage<unsigned char>            imgTailClose(imgTailOpen, -4);
-                MorphImage<unsigned char>            imgExcClose( imgExcOpen, -4 );
-                
-                PositiveFilter<unsigned char>        filPos(0);
-                ActivationTimeMap<
-                    unsigned char,
-                    PositiveFilter<unsigned char> >  imgActTime(imgFrontClose, filPos, hbt_minPeakDistance);
-                MedianFilter<unsigned short>         imgATMFil( imgActTime, 5 );
-                Image<unsigned char>                 imgIso( imgFront.height, imgFront.width, 0 );
-                
-                BinaryAdjacent<unsigned char>        imgAdj( imgFrontClose, imgTailClose, psp_adjacentSize);
                 DivPhaseSingularityAnalyzer<double>  imgDivPSP( imgFil );
                 LabelImage                           imgLabel(dynamic_cast<Image<unsigned char>&>(imgDivPSP));
                 
@@ -370,20 +348,12 @@ namespace MLARR{
                         }
                     }
                 }
-                imgFront.setRoi  ( imgRoiClose );
-                imgTail.setRoi   ( imgRoiClose );
-                imgExc.setRoi    ( imgRoiClose );
-                imgAdj.setRoi    ( imgRoiClose );
-                imgActTime.setRoi( imgRoiClose );
                 imgDivPSP.setRoi ( imgRoiClose );
                 
                 /* Display */
                 Display<double>         disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
                 Display<double>         dispFil("Filtered Phase Map", imgFil, M_PI, -M_PI, colMap_hsv);
-                Display<unsigned char>  dispExc("excitable gap", imgExc, 1, 0, colMap_gray);
-                Display<unsigned short> disp_atm("activation time", imgATMFil, psp_isoMax, 0, colMap_gray);
-                Display<unsigned char>  dispIso("Isochronal", imgIso, 1, 0, colMap_gray);
-                Display<double>         dispDivMax("Phase div max", imgDivPSP.imgDiv, 1.0, 0, colMap_gray);
+                Display<double>         dispDiv("Phase div", imgDivPSP.imgDiv, 1.0, 0, colMap_gray);
 
                 /* Log file */
                 sprintf( buf, fmt_log_psp.c_str(), this->dstDir.c_str() );
@@ -398,28 +368,14 @@ namespace MLARR{
                     if( camPhase.f_tmp - camPhase.f_start <= hbt_minPeakDistance * 4 ) continue;
                     camOpt.capture();
                     imgMed.execute();
-                    //imgFil_pre.execute();
                     imgFil.execute();
-                    imgExc.execute();
-                    imgFront.execute();
-                    imgTail.execute();
-                    imgExcOpen.execute();
-                    imgExcClose.execute();
-                    imgFrontOpen.execute();
-                    imgFrontClose.execute();
-                    imgTailOpen.execute();
-                    imgTailClose.execute();
-                    imgAdj.execute();
                     imgDivPSP.execute();
                     imgLabel.execute();
-                    imgActTime.execute();
-                    imgATMFil.execute();
-                    imgIso.clear(0);
                     
                     /* output PS info.*/
                     ofs << camPhase.getTime() << "," ;
                     for( std::vector<MLARR::Basic::Point<double> >::iterator it = imgLabel.vec_ps.begin(); it != imgLabel.vec_ps.end(); it++ ){
-                        dispExc.drawRect( it->getX(), it->getY(), 2, white );
+                        //dispExc.drawRect( it->getX(), it->getY(), 2, white );
                         dispFil.drawRect( it->getX(), it->getY(), 2, white );
                         ofs << it->getX()*hbt_compRate << "," << it->getY()*hbt_compRate << ",";
                     }
@@ -428,28 +384,10 @@ namespace MLARR{
                     /* show images.*/
                     disp_opt.show( camPhase.getTime(), red);
                     dispFil.show( camPhase.getTime(), red);
-                    dispExc.drawMask(imgFrontClose, red);
-                    dispExc.drawMask(imgTailClose, blue);
-                    dispExc.drawMask(imgAdj, green);
-                    dispExc.show( camPhase.getTime(), red );
-                    disp_atm.show();
-                    dispDivMax.show();
-                    for( int i = psp_isoInterval; i < psp_isoMax; i+=psp_isoInterval){
-                        RangeDetector<unsigned short>        imgWF( imgATMFil, i-1, i+1 );
-                        BinaryThinLine<unsigned char>        imgWFLine( imgWF );
-                        imgWF.execute();
-                        imgWFLine.execute();
-                        cv::Vec3b color;
-                        IO::brendColor( blue, green, i / static_cast<double>(psp_isoMax), color);
-                        dispIso.drawMask(imgWFLine, color);
-                    }
-                    dispIso.show();
+                    dispDiv.show( camPhase.getTime(), red );
                     
                     /* save images */
-                    disp_opt.save(this->dstDir, fmt_jpg_psp, camPhase.getTime());
                     dispFil.save(this->dstDir, fmt_jpg_hbf, camPhase.getTime());
-                    dispExc.save(this->dstDir, fmt_jpg_ecg, camPhase.getTime());
-                    dispIso.save(this->dstDir, fmt_jpg_iso, camPhase.getTime());
                     
                     //cvWaitKey(-1);
                 }
