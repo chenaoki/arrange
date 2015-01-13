@@ -59,11 +59,11 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-e fbsim"
+            argument = "-e optical"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-p /usr/local/tmp/ArrangeParam/feedback.json"
+            argument = "-p /usr/local/tmp/ArrangeParam/temp.json"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

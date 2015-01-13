@@ -9,10 +9,6 @@
 /* Begin PBXBuildFile section */
 		660E55311997A0C900EFD371 /* Arrange.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 660E55301997A0C900EFD371 /* Arrange.cpp */; };
 		66556AAC1966CE1200AF8E8F /* Arrange.1 in Copy Files */ = {isa = PBXBuildFile; fileRef = 66556AAB1966CE1200AF8E8F /* Arrange.1 */; };
-		66556AB61966D1DB00AF8E8F /* libavdevice.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556AB21966D1DB00AF8E8F /* libavdevice.a */; };
-		66556AB71966D1DB00AF8E8F /* libopencv_core.2.4.9.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556AB31966D1DB00AF8E8F /* libopencv_core.2.4.9.dylib */; };
-		66556AB81966D1DB00AF8E8F /* libopencv_highgui.2.4.9.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556AB41966D1DB00AF8E8F /* libopencv_highgui.2.4.9.dylib */; };
-		66556AB91966D1DB00AF8E8F /* libopencv_imgproc.2.4.9.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556AB51966D1DB00AF8E8F /* libopencv_imgproc.2.4.9.dylib */; };
 		66556AF01966D1F600AF8E8F /* libboost_chrono.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556ABA1966D1F500AF8E8F /* libboost_chrono.a */; };
 		66556AF11966D1F600AF8E8F /* libboost_chrono.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556ABB1966D1F500AF8E8F /* libboost_chrono.dylib */; };
 		66556AF21966D1F600AF8E8F /* libboost_context.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556ABC1966D1F500AF8E8F /* libboost_context.a */; };
@@ -68,6 +64,10 @@
 		66556B241966D1F600AF8E8F /* libboost_wserialization.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556AEE1966D1F500AF8E8F /* libboost_wserialization.a */; };
 		66556B251966D1F600AF8E8F /* libboost_wserialization.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 66556AEF1966D1F500AF8E8F /* libboost_wserialization.dylib */; };
 		66556B2F1966D8D800AF8E8F /* coefs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66556B2C1966D8D800AF8E8F /* coefs.cpp */; };
+		669B775F1A052E8600862779 /* libavdevice.55.10.100.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 669B775B1A052E8600862779 /* libavdevice.55.10.100.dylib */; };
+		669B77601A052E8600862779 /* libopencv_core.2.4.9.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 669B775C1A052E8600862779 /* libopencv_core.2.4.9.dylib */; };
+		669B77611A052E8600862779 /* libopencv_highgui.2.4.9.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 669B775D1A052E8600862779 /* libopencv_highgui.2.4.9.dylib */; };
+		669B77621A052E8600862779 /* libopencv_imgproc.2.4.9.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 669B775E1A052E8600862779 /* libopencv_imgproc.2.4.9.dylib */; };
 		66D5C9A719931EB200171BA3 /* AVTCamera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66D5C9A619931EB200171BA3 /* AVTCamera.cpp */; };
 		66D5C9AD19934F2F00171BA3 /* IO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 66D5C9AC19934F2F00171BA3 /* IO.cpp */; };
 /* End PBXBuildFile section */
@@ -95,10 +95,6 @@
 		66460F7E198B892F004C73FC /* picojson.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = picojson.h; sourceTree = "<group>"; };
 		66556AA61966CE1200AF8E8F /* Arrange */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Arrange; sourceTree = BUILT_PRODUCTS_DIR; };
 		66556AAB1966CE1200AF8E8F /* Arrange.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = Arrange.1; sourceTree = "<group>"; };
-		66556AB21966D1DB00AF8E8F /* libavdevice.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavdevice.a; path = /opt/local/lib/libavdevice.a; sourceTree = "<absolute>"; };
-		66556AB31966D1DB00AF8E8F /* libopencv_core.2.4.9.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_core.2.4.9.dylib; path = /opt/local/lib/libopencv_core.2.4.9.dylib; sourceTree = "<absolute>"; };
-		66556AB41966D1DB00AF8E8F /* libopencv_highgui.2.4.9.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_highgui.2.4.9.dylib; path = /opt/local/lib/libopencv_highgui.2.4.9.dylib; sourceTree = "<absolute>"; };
-		66556AB51966D1DB00AF8E8F /* libopencv_imgproc.2.4.9.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_imgproc.2.4.9.dylib; path = /opt/local/lib/libopencv_imgproc.2.4.9.dylib; sourceTree = "<absolute>"; };
 		66556ABA1966D1F500AF8E8F /* libboost_chrono.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_chrono.a; path = ../../../lib/boost_1_55_0_with_clang/lib/libboost_chrono.a; sourceTree = "<group>"; };
 		66556ABB1966D1F500AF8E8F /* libboost_chrono.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libboost_chrono.dylib; path = ../../../lib/boost_1_55_0_with_clang/lib/libboost_chrono.dylib; sourceTree = "<group>"; };
 		66556ABC1966D1F500AF8E8F /* libboost_context.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_context.a; path = ../../../lib/boost_1_55_0_with_clang/lib/libboost_context.a; sourceTree = "<group>"; };
@@ -164,6 +160,10 @@
 		66556B301966D8FC00AF8E8F /* VectorAnalyzer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VectorAnalyzer.h; sourceTree = "<group>"; };
 		66660B3F198FD69000AA108F /* Optical.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Optical.h; sourceTree = "<group>"; };
 		6680A31D19CE527B005D2DD5 /* Hilbert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Hilbert.h; sourceTree = "<group>"; };
+		669B775B1A052E8600862779 /* libavdevice.55.10.100.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libavdevice.55.10.100.dylib; path = ../../../Cellar/ffmpeg/2.2.4/lib/libavdevice.55.10.100.dylib; sourceTree = "<group>"; };
+		669B775C1A052E8600862779 /* libopencv_core.2.4.9.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_core.2.4.9.dylib; path = ../../../Cellar/opencv/2.4.9/lib/libopencv_core.2.4.9.dylib; sourceTree = "<group>"; };
+		669B775D1A052E8600862779 /* libopencv_highgui.2.4.9.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_highgui.2.4.9.dylib; path = ../../../Cellar/opencv/2.4.9/lib/libopencv_highgui.2.4.9.dylib; sourceTree = "<group>"; };
+		669B775E1A052E8600862779 /* libopencv_imgproc.2.4.9.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_imgproc.2.4.9.dylib; path = ../../../Cellar/opencv/2.4.9/lib/libopencv_imgproc.2.4.9.dylib; sourceTree = "<group>"; };
 		669CF12819931DEF00A60095 /* AVTCamera.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AVTCamera.h; sourceTree = "<group>"; };
 		66C429EF19B071A60066D2E1 /* CameraFactory.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CameraFactory.hpp; sourceTree = "<group>"; };
 		66D5C9A619931EB200171BA3 /* AVTCamera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AVTCamera.cpp; sourceTree = "<group>"; };
@@ -178,6 +178,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				669B775F1A052E8600862779 /* libavdevice.55.10.100.dylib in Frameworks */,
+				669B77601A052E8600862779 /* libopencv_core.2.4.9.dylib in Frameworks */,
+				669B77611A052E8600862779 /* libopencv_highgui.2.4.9.dylib in Frameworks */,
+				669B77621A052E8600862779 /* libopencv_imgproc.2.4.9.dylib in Frameworks */,
 				66556AF01966D1F600AF8E8F /* libboost_chrono.a in Frameworks */,
 				66556AF11966D1F600AF8E8F /* libboost_chrono.dylib in Frameworks */,
 				66556AF21966D1F600AF8E8F /* libboost_context.a in Frameworks */,
@@ -232,10 +236,6 @@
 				66556B231966D1F600AF8E8F /* libboost_unit_test_framework.dylib in Frameworks */,
 				66556B241966D1F600AF8E8F /* libboost_wserialization.a in Frameworks */,
 				66556B251966D1F600AF8E8F /* libboost_wserialization.dylib in Frameworks */,
-				66556AB61966D1DB00AF8E8F /* libavdevice.a in Frameworks */,
-				66556AB71966D1DB00AF8E8F /* libopencv_core.2.4.9.dylib in Frameworks */,
-				66556AB81966D1DB00AF8E8F /* libopencv_highgui.2.4.9.dylib in Frameworks */,
-				66556AB91966D1DB00AF8E8F /* libopencv_imgproc.2.4.9.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -335,10 +335,10 @@
 		66A18D37196A2CF400AAF6AF /* opencv */ = {
 			isa = PBXGroup;
 			children = (
-				66556AB21966D1DB00AF8E8F /* libavdevice.a */,
-				66556AB31966D1DB00AF8E8F /* libopencv_core.2.4.9.dylib */,
-				66556AB41966D1DB00AF8E8F /* libopencv_highgui.2.4.9.dylib */,
-				66556AB51966D1DB00AF8E8F /* libopencv_imgproc.2.4.9.dylib */,
+				669B775B1A052E8600862779 /* libavdevice.55.10.100.dylib */,
+				669B775C1A052E8600862779 /* libopencv_core.2.4.9.dylib */,
+				669B775D1A052E8600862779 /* libopencv_highgui.2.4.9.dylib */,
+				669B775E1A052E8600862779 /* libopencv_imgproc.2.4.9.dylib */,
 			);
 			name = opencv;
 			sourceTree = "<group>";
@@ -558,13 +558,15 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/opt/local/include,
+					/usr/local/include,
 					/usr/local/lib/boost_1_55_0_with_clang/include,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/opt/local/lib,
 					/usr/local/lib/boost_1_55_0_with_clang/lib,
+					/usr/local/Cellar/opencv/2.4.9/lib,
+					/usr/local/Cellar/ffmpeg/2.2.4/lib,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -577,13 +579,15 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					/opt/local/include,
+					/usr/local/include,
 					/usr/local/lib/boost_1_55_0_with_clang/include,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					/opt/local/lib,
 					/usr/local/lib/boost_1_55_0_with_clang/lib,
+					/usr/local/Cellar/opencv/2.4.9/lib,
+					/usr/local/Cellar/ffmpeg/2.2.4/lib,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
