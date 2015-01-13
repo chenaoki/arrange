@@ -12,8 +12,10 @@
 #include "stdafx.h"
 #include "Basic.h"
 #include "coefs.h"
+#include <math.h>
 #include <float.h>
 #include <algorithm>
+#include <vector>
 
 #include "IO.h"
 #include "Analyzer.h"
@@ -36,6 +38,22 @@ namespace MLARR{
             diff = phaseComplement(diff - M_PI ) + M_PI;
             diff = diff < ( 2 * M_PI - diff ) ? diff : ( 2 * M_PI - diff );
             return diff;
+        };
+        
+        inline double phaseDiv( std::vector<double> &vec ){
+            double div = 0.0;
+            double ave_cos = 0.0;
+            double ave_sin = 0.0;
+            for( std::vector<double>::iterator it = vec.begin(); it != vec.end(); it++){
+                ave_cos += cos( *it );
+                ave_sin += sin( *it );
+            }
+            if( vec.size() ){
+                ave_cos /= (double)vec.size();
+                ave_sin /= (double)vec.size();
+            }
+            div = 1.0 - ( ave_cos * ave_cos + ave_sin * ave_sin );
+            return div;
         };
         
 		template<class T>
@@ -367,21 +385,15 @@ namespace MLARR{
 						if( *(this->im_roi.at(w_c, h_c)) ){
                             
 							// evaluate div
-                            int cnt = 0;
-                            double div = 0.0;
-                            double base = *(this->srcImg.at(w_c, h_c));
+                            std::vector<double> vec;
 							for( int i = 0; i < winSize; i++){
 								for( int j = 0; j < winSize; j++){
                                     if( *(this->im_roi.at(w+i, h+j)) ){
-                                        double diff = (*(this->srcImg.at(w+i, h+j))) - base;
-                                        diff = phaseComplement( diff );
-                                        div += diff * diff;
-                                        cnt++;
+                                        vec.push_back( *(this->srcImg.at(w+i, h+j)) );
                                     }
 								}
 							}
-                            div = cnt ? sqrt( div ) / cnt : 0;
-							this->imgDiv.setValue(w_c, h_c, div);
+							this->imgDiv.setValue(w_c, h_c, phaseDiv(vec));
                             
 						}
 					}
