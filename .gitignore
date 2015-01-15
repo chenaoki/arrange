@@ -1,6 +1,7 @@
 DerivedData/*
 .DS_Store
-Arrange.xcodeproj/project.xcworkspace/xcuserdata/*
+Arrange.xcodeproj/*
+!Arrange.xcodeproj/project.pbxproj
 Arrange/Arrange
 Arrange/obj/*
 *.json
