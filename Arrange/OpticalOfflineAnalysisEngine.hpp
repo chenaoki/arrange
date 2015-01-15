@@ -64,15 +64,17 @@ namespace MLARR{
             std::string hbt_elecImagePath;
             int psp_closeRoi;
             int psp_medianSize;
-            int psp_adjacentSize;
-            double psp_phaseFrontMean;
-            double psp_phaseFrontRange;
-            int psp_isoMax;
-            int psp_isoInterval;
+            int psp_winSize;
+            double psp_divThre;
             double psp_roiMarginTop;
             double psp_roiMarginBottom;
             double psp_roiMarginLeft;
             double psp_roiMarginRight;
+            
+            double iso_phaseFrontMean;
+            double iso_phaseFrontRange;
+            int iso_max;
+            int iso_interval;
             std::string camType;
             
         public:
@@ -136,17 +138,21 @@ namespace MLARR{
                 picojson::object& psp = opt["psdetect"].get<picojson::object>();
                 psp_closeRoi = atoi( psp["closeRoi"].to_str().c_str() );
                 psp_medianSize = atoi( psp["medianFilterSize"].to_str().c_str());
-                psp_adjacentSize = atoi( psp["adjacentSize"].to_str().c_str());
-                psp_phaseFrontMean = atof( psp["phaseFrontMean"].to_str().c_str() );
-                psp_phaseFrontRange = atof( psp["phaseFrontRange"].to_str().c_str() );
-                picojson::object& psp_iso = psp["isochrone"].get<picojson::object>();
-                psp_isoMax = atoi( psp_iso["max"].to_str().c_str());
-                psp_isoInterval = atoi( psp_iso["interval"].to_str().c_str());
+                psp_winSize = atoi( psp["winSize"].to_str().c_str() );
+                psp_divThre = atof( psp["divThre"].to_str().c_str() );
+                
                 picojson::object& psp_roi = psp["roiMargin"].get<picojson::object>();
                 psp_roiMarginTop = atof( psp_roi["top"].to_str().c_str() );
                 psp_roiMarginBottom = atof( psp_roi["bottom"].to_str().c_str() );
                 psp_roiMarginLeft = atof( psp_roi["left"].to_str().c_str() );
                 psp_roiMarginRight = atof( psp_roi["right"].to_str().c_str() );
+
+                iso_phaseFrontMean = atof( psp["phaseFrontMean"].to_str().c_str() );
+                iso_phaseFrontRange = atof( psp["phaseFrontRange"].to_str().c_str() );
+                
+                picojson::object& psp_iso = psp["isochrone"].get<picojson::object>();
+                iso_max = atoi( psp_iso["max"].to_str().c_str());
+                iso_interval = atoi( psp_iso["interval"].to_str().c_str());
                 
                 
                 /* create camera object */
@@ -327,7 +333,7 @@ namespace MLARR{
                 MorphImage<unsigned char>            imgRoiClose( imgRoiOpen, -2 * psp_closeRoi);
                 MedianFilter<double>                 imgMed( camPhase, psp_closeRoi );
                 PhaseMedianFilter<double>            imgFil( imgMed, psp_medianSize );
-                DivPhaseSingularityAnalyzer<double>  imgDivPSP( imgFil );
+                DivPhaseSingularityAnalyzer<double>  imgDivPSP( imgFil, psp_winSize, psp_divThre );
                 LabelImage                           imgLabel(dynamic_cast<Image<unsigned char>&>(imgDivPSP));
                 
                 /* ROI setting */
@@ -418,7 +424,7 @@ namespace MLARR{
                 MorphImage<unsigned char>            imgRoiClose( imgRoiOpen, -2 * psp_closeRoi);
                 MedianFilter<double>                 imgMed( camPhase, psp_closeRoi );
                 PhaseMedianFilter<double>            imgFil( imgMed, psp_medianSize );
-                PhaseRangeDetector<double>           imgFront( imgFil, M_PI * psp_phaseFrontMean, psp_phaseFrontRange);
+                PhaseRangeDetector<double>           imgFront( imgFil, M_PI * iso_phaseFrontMean, iso_phaseFrontRange);
                 MorphImage<unsigned char>            imgFrontOpen(imgFront, 5);
                 MorphImage<unsigned char>            imgFrontClose(imgFrontOpen, -4);
                 PositiveFilter<unsigned char>        filPos(0);
@@ -452,7 +458,7 @@ namespace MLARR{
                 /* Display */
                 Display<double>         disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
                 Display<double>         dispFil("Filtered Phase Map", imgFil, M_PI, -M_PI, colMap_hsv);
-                Display<unsigned short> disp_atm("activation time", imgATMFil, psp_isoMax, 0, colMap_gray);
+                Display<unsigned short> disp_atm("activation time", imgATMFil, iso_max, 0, colMap_gray);
                 Display<unsigned char>  dispIso("Isochronal", imgIso, 1, 0, colMap_gray);
                 
                 /* Log file */
@@ -480,13 +486,13 @@ namespace MLARR{
                     disp_opt.show( camPhase.getTime(), red);
                     dispFil.show( camPhase.getTime(), red);
                     disp_atm.show();
-                    for( int i = psp_isoInterval; i < psp_isoMax; i+=psp_isoInterval){ // draw isochronal lines
+                    for( int i = iso_interval; i < iso_max; i+=iso_interval){ // draw isochronal lines
                         RangeDetector<unsigned short>        imgWF( imgATMFil, i-1, i+1 );
                         BinaryThinLine<unsigned char>        imgWFLine( imgWF );
                         imgWF.execute();
                         imgWFLine.execute();
                         cv::Vec3b color;
-                        IO::brendColor( blue, green, i / static_cast<double>(psp_isoMax), color);
+                        IO::brendColor( blue, green, i / static_cast<double>(iso_max), color);
                         dispIso.drawMask(imgWFLine, color);
                     }
                     dispIso.show();

@@ -10,7 +10,7 @@
 		"frame" : {
 			"start":1,
 			"skip":1,
-			"stop":400
+			"stop":2000
 		}
 	},
 
@@ -34,12 +34,14 @@
 			"closeRoi" : 7,
 			"medianFilterSize" : 9,
 			"adjacentSize" : 5,
+			"winSize" :  9,
+			"divThre" : 0.8,
 			"isochrone" : {
 				"max" : 80,
 				"interval" : 5
 			},
 			"roiMargin" : {
-				"top"    : 0.20,
+				"top"    : 0.40,
 				"bottom" : 0.20,
 				"left"   : 0.05,
 				"right"  : 0.05

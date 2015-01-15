@@ -52,7 +52,7 @@ namespace MLARR{
                 ave_cos /= (double)vec.size();
                 ave_sin /= (double)vec.size();
             }
-            div = 1.0 - ( ave_cos * ave_cos + ave_sin * ave_sin );
+            div = 1.0 - sqrt( ave_cos * ave_cos + ave_sin * ave_sin );
             return div;
         };
         
@@ -358,16 +358,17 @@ namespace MLARR{
         class DivPhaseSingularityAnalyzer : public ImageAnalyzer<T, unsigned char>{
         public:
             int winSize;
+            double thre;
             Image<double> imgDiv;
             SpacialFilter<double> imgDivFil;
         public:
             
-            explicit DivPhaseSingularityAnalyzer( MLARR::Basic::Image<T>& _src)
-            :ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), winSize( 15 ),
+            explicit DivPhaseSingularityAnalyzer( MLARR::Basic::Image<T>& _src, int _winSize, double _thre)
+            :ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), winSize( _winSize ), thre( _thre ),
             imgDiv(_src.height, _src.width, 0), imgDivFil(imgDiv, 5,5, coefficients.vec_gaussian_5x5){};
             
             DivPhaseSingularityAnalyzer( MLARR::Basic::Image<T>& _src, DivPhaseSingularityAnalyzer<T>& pre)
-            : ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), winSize( 15 ),
+            : ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src), winSize( pre.winSize ), thre( pre.thre ),
             imgDiv(_src.height, _src.width, 0), imgDivFil(imgDiv, 5,5, coefficients.vec_gaussian_5x5){};
             
             ~DivPhaseSingularityAnalyzer(void){};
@@ -393,35 +394,14 @@ namespace MLARR{
                                     }
 								}
 							}
-							this->imgDiv.setValue(w_c, h_c, phaseDiv(vec));
-                            
+                            double div = phaseDiv( vec );
+							this->imgDiv.setValue( w_c, h_c, div );
+                            this->setValue(w_c, h_c, static_cast<T>(div) > this->thre ? 1 : 0); // Binarize
 						}
 					}
 				}
                 
                 //imgDivFil.execute();
-                
-                double divMax = DBL_MIN;
-                double divMin = DBL_MAX;
-                for( int h = 0; h <= this->height - winSize; h++){
-                    for( int w = 0; w <= this->width - winSize; w++){
-                        int h_c = h + ( winSize - 1 )/2;
-                        int w_c = w + ( winSize - 1 )/2;
-                        double div = *imgDiv.at(w_c, h_c);
-                        divMax = divMax < div ? div : divMax;
-                        divMin = divMin > div ? div : divMin;
-                    }
-                }
-                double thre = divMin + (divMax - divMin) * 0.95;
-                for( int h = 0; h <= this->height - winSize; h++){
-                    for( int w = 0; w <= this->width - winSize; w++){
-                        int h_c = h + ( winSize - 1 )/2;
-                        int w_c = w + ( winSize - 1 )/2;
-                        double div = *imgDiv.at(w_c, h_c);
-                        imgDiv.setValue(w_c, h_c, (div - divMin) / (divMax - divMin) ); // normalize
-                        this->setValue(w_c, h_c, static_cast<T>(div) > thre ? 1 : 0); // Binarize
-                    }
-                }
                 
             };
         };
