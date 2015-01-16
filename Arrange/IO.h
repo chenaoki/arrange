@@ -124,6 +124,19 @@ namespace MLARR{
 				dst+= src >> 8;
 			};
 		};
+        
+        class HurricaneRawFileCamera : public RawFileCamera<unsigned short>{
+        public:
+            HurricaneRawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size = 512, int _fps = 1000 )
+            : RawFileCamera<unsigned short>( _size, _size, 8, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop ){
+            };
+            ~HurricaneRawFileCamera(void){};
+        protected:
+            void binaryTrans( const unsigned short& src, unsigned short& dst){
+                /* do nothing */
+                dst = src;
+            };
+        };
 
 		class MaxRawFileCamera : public RawFileCamera<unsigned short>{
 		public:

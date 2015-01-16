@@ -44,6 +44,8 @@ namespace MLARR{
                     
                     if("raw_dalsa" == camType ){
                         cam = static_cast<void*>( new DalsaRawFileCamera( srcDir, format, f_start, f_skip, f_stop, size, frameRate ));
+                    }else if( "raw_hurricane" == camType ){
+                        cam = static_cast<void*>( new HurricaneRawFileCamera( srcDir, format, f_start, f_skip, f_stop, size, frameRate ));
                     }else if( "raw_max" == camType ){
                         cam = static_cast<void*>( new MaxRawFileCamera( srcDir, format, f_start, f_skip, f_stop, size, frameRate ));
                     }else if( "raw_sa4" ){
