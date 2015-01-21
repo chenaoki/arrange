@@ -4,4 +4,4 @@ Arrange.xcodeproj/*
 !Arrange.xcodeproj/project.pbxproj
 Arrange/Arrange
 Arrange/obj/*
-*.json
+BAT/*
