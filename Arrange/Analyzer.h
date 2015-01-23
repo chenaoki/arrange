@@ -667,6 +667,44 @@ namespace MLARR{
             };
         };
         
+        template< typename T>
+        class ImageCOG : public ImageAnalyzer<T, T>{
+        public:
+            double x, y;
+        public:
+            explicit ImageCOG(Image<T>& _srcImg)
+            : ImageAnalyzer<T, T>( _srcImg.height, _srcImg.width, 0, _srcImg),
+            x(_srcImg.width/2), y(_srcImg.height/2) {};
+            virtual ~ImageCOG(void){};
+        public:
+            void execute(void){
+                
+                int cnt = 0;
+                double num;
+                double meanX, meanY;
+                this->x = this->width / 2;
+                this->y = this->width / 2;
+                meanX = meanY = num = 0.0;
+                for( int h = 0; h < this->height; h++){
+                    for( int w = 0; w < this->width; w++){
+                        if( *(this->im_roi.at(w, h)) ){
+                            cnt++;
+                            double value = static_cast<double>(*(this->srcImg.at(w, h)));
+                            num   += value;
+                            meanX += static_cast<double>(w) * value;
+                            meanY += static_cast<double>(h) * value;
+                        }
+                    }
+                }
+                if( cnt ){
+                    x = meanX / num;
+                    y = meanY / num;
+                }
+                *dynamic_cast<Image<T>*>(this) = this->srcImg;
+            };
+            
+        };
+        
 
         
         template< class SHRINKER, class ANALYZER, typename T_IN, typename T_OUT >
