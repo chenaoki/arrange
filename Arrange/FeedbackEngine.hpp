@@ -50,6 +50,7 @@ namespace MLARR{
             int nPyrDown;
             int psp_winSize;
             int psp_closeRoi;
+            T rnm_minDelta;
             double psp_roiMarginTop;
             double psp_roiMarginBottom;
             double psp_roiMarginLeft;
@@ -74,6 +75,7 @@ namespace MLARR{
                 nMode = atoi( fb["mode"].to_str().c_str() );
                 nFrameRange = atoi( fb["frameRange"].to_str().c_str() );
                 nPyrDown = atoi( fb["pyramidDown"].to_str().c_str() );
+                rnm_minDelta = atoi( fb["minDelta"].to_str().c_str() );
                 psp_winSize = atoi( fb["winSize"].to_str().c_str() );
                 psp_closeRoi = atoi( fb["closeRoi"].to_str().c_str() );
                 picojson::object psp_roi = fb["roiMargin"].get<picojson::object>();
@@ -123,19 +125,15 @@ namespace MLARR{
 
                 char buf[256];
                 
-                /* Camera */
-                RawFileCamera<unsigned char> camRoi(
-                this->cam->width, this->cam->height, std::numeric_limits<char>::digits, this->cam->fps,
-                this->dstDir, MLARR::Engine::fmt_raw_roi, 1,1,1);
-
                 /* ImageAnalyzer */
-                ImageThinOut<unsigned char>          imgRoiH(camRoi);
+
+                MaxImageAnalyzer<T> maxEng(0, *(this->cam));
+				MinImageAnalyzer<T> minEng(( 1 << this->cam->bits )-1, *(this->cam));
+                OpticalImageAnalyzer<T> imgOpt(*(this->cam), maxEng, minEng, rnm_minDelta);
+                ImageThinOut<unsigned char>          imgRoiH(imgOpt.getRoi());
                 ImageThinOut<unsigned char>          imgRoiQ(dynamic_cast<Image<unsigned char>&>(imgRoiH));
                 MorphImage<unsigned char>            imgRoiOpen( imgRoiQ, psp_closeRoi);
                 MorphImage<unsigned char>            imgRoiClose( imgRoiOpen, -2 * psp_closeRoi);
-                MaxImageAnalyzer<T> maxEng(0, *(this->cam));
-				MinImageAnalyzer<T> minEng(( 1 << this->cam->bits )-1, *(this->cam));
-                OpticalImageAnalyzer<T> imgOpt(*(this->cam), maxEng, minEng, 20);
                 ImageThinOut<double> imgH(imgOpt);
                 ImageThinOut<double> imgQ(dynamic_cast<Image<double>&>(imgH));
                 SpacialFilter<double> imgFil(imgQ, 5,5, coefficients.vec_gaussian_5x5);
@@ -146,7 +144,8 @@ namespace MLARR{
                 
                 /* Dumper */
                 Dumper<T> dump_cam( *(this->cam), this->dstDir, this->fmt_raw_cam);
-                
+                Dumper<unsigned char> dump_roi( imgOpt.getRoi(), this->dstDir, fmt_raw_roi);
+
                 /* Log file */
                 sprintf( buf, this->fmt_log_sps.c_str(), this->dstDir.c_str() );
                 ofstream ofs(buf);
@@ -177,28 +176,6 @@ namespace MLARR{
                     name << "pyr output " << std::distance(imgPyr.vec_analyzer.begin(), it);
                     vec_disp_sps.push_back( new Display<unsigned char>( name.str().c_str(), *(*it), 1, 0, colMap_gray));
                 }
-                
-                /* ROI setting */
-                camRoi.capture();
-                imgRoiH.execute();
-                imgRoiQ.execute();
-                imgRoiOpen.execute();
-                imgRoiClose.execute();
-                for( int j = 0; j < imgRoiClose.height; j++ ){
-                    if( j <= imgRoiClose.height * psp_roiMarginTop || j >= imgRoiClose.height * (1 - psp_roiMarginBottom)) {
-                        for( int i = 0; i < imgRoiClose.width; i++ ){
-                            imgRoiClose.setValue( i, j, 0);
-                        }
-                    }
-                }
-                for( int i = 0; i < imgRoiClose.width; i++ ){
-                    if( i <= imgRoiClose.height * psp_roiMarginLeft || i >= imgRoiClose.height * (1 - psp_roiMarginRight)) {
-                        for( int j = 0; j < imgRoiClose.height; j++ ){
-                            imgRoiClose.setValue( i, j, 0);
-                        }
-                    }
-                }
-                imgPyr.setRoi(dynamic_cast<Image<unsigned char>&>(imgRoiClose));
                 
                 /* Window size setting */
                 for( int i = 1; i < imgPyr.vec_analyzer.size(); i++){
@@ -233,6 +210,28 @@ namespace MLARR{
                         if( !flgUpdate ){
                             imgOpt.updateRange();
                         }
+                        
+                        /* ROI setting for pyramid */
+                        imgRoiH.execute();
+                        imgRoiQ.execute();
+                        imgRoiOpen.execute();
+                        imgRoiClose.execute();
+                        for( int j = 0; j < imgRoiClose.height; j++ ){
+                            if( j <= imgRoiClose.height * psp_roiMarginTop || j >= imgRoiClose.height * (1 - psp_roiMarginBottom)) {
+                                for( int i = 0; i < imgRoiClose.width; i++ ){
+                                    imgRoiClose.setValue( i, j, 0);
+                                }
+                            }
+                        }
+                        for( int i = 0; i < imgRoiClose.width; i++ ){
+                            if( i <= imgRoiClose.height * psp_roiMarginLeft || i >= imgRoiClose.height * (1 - psp_roiMarginRight)) {
+                                for( int j = 0; j < imgRoiClose.height; j++ ){
+                                    imgRoiClose.setValue( i, j, 0);
+                                }
+                            }
+                        }
+                        imgPyr.setRoi(dynamic_cast<Image<unsigned char>&>(imgRoiClose));
+
                         
                         /* Count Start */
                         if( cnt++ == 0 ) gettimeofday(&s, NULL);
