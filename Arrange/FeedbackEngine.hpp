@@ -61,11 +61,11 @@ namespace MLARR{
         public:
             
             FeedbackEngine(std::string& paramFilePath) : Engine(paramFilePath),
-            fmt_raw_cam("%s/fb/raw/cam/%06d.raw"),
-            fmt_jpg_cam("%s/fb/jpg/cam/%06d.jpg"),
-            fmt_jpg_det("%s/fb/jpg/det/%06d.jpg"),
-            fmt_jpg_psp("%s/fb/jpg/psp/%06d.jpg"),
-            fmt_log_sps("%s/fb/log/sps.log")
+            fmt_raw_cam("%s/raw/cam/%06d.raw"),
+            fmt_jpg_cam("%s/jpg/cam/%06d.jpg"),
+            fmt_jpg_det("%s/jpg/det/%06d.jpg"),
+            fmt_jpg_psp("%s/jpg/psp/%06d.jpg"),
+            fmt_log_sps("%s/log/sps.log")
             {
                 
                 /* load parameter file (JSON) */
@@ -86,27 +86,25 @@ namespace MLARR{
                 
                 /* make output directories */
                 std::string temp;
-                temp = this->dstDir + "/fb/";
+                temp = this->dstDir + "/raw";
                 mkdir( temp.c_str() , 0777);
-                temp = this->dstDir + "/fb/raw";
+                temp = this->dstDir + "/raw/cam";
                 mkdir( temp.c_str() , 0777);
-                temp = this->dstDir + "/fb/raw/cam";
+                temp = this->dstDir + "/jpg";
                 mkdir( temp.c_str() , 0777);
-                temp = this->dstDir + "/fb/jpg";
+                temp = this->dstDir + "/jpg/cam";
                 mkdir( temp.c_str() , 0777);
-                temp = this->dstDir + "/fb/jpg/cam";
+                temp = this->dstDir + "/jpg/det";
                 mkdir( temp.c_str() , 0777);
-                temp = this->dstDir + "/fb/jpg/det";
+                temp = this->dstDir + "/jpg/psp";
                 mkdir( temp.c_str() , 0777);
-                temp = this->dstDir + "/fb/jpg/psp";
+                temp = this->dstDir + "/jpg/pyr";
                 mkdir( temp.c_str() , 0777);
-                temp = this->dstDir + "/fb/jpg/pyr";
-                mkdir( temp.c_str() , 0777);
-                temp = this->dstDir + "/fb/log";
+                temp = this->dstDir + "/log";
                 mkdir( temp.c_str() , 0777);
                 char buf[256];
                 for( int p = 0; p < nPyrDown; p++){
-                    sprintf( buf, "%s/fb/jpg/pyr/%02d", this->dstDir.c_str(), p);
+                    sprintf( buf, "%s/jpg/pyr/%02d", this->dstDir.c_str(), p);
                     mkdir( buf, 0777);
                 }
                 
@@ -258,7 +256,7 @@ namespace MLARR{
                             disp_opt.show( cam->getTime(), white);
                             disp_opt.save( this->dstDir, this->fmt_jpg_det, cam->getTime());
                             for( int i = 0; i < vec_disp_sp.size(); i++){
-                                sprintf( buf, "%%s/fb/jpg/pyr/%02d/%%06d.jpg", i);
+                                sprintf( buf, "%%s/jpg/pyr/%02d/%%06d.jpg", i);
                                 vec_disp_sp[i]->show();
                                 vec_disp_sp[i]->save(this->dstDir, buf, this->cam->f_tmp);
                             }
