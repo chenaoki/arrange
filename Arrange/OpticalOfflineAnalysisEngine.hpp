@@ -160,7 +160,7 @@ namespace MLARR{
                 
                 /* create camera object */
                 if( NULL == ( this->cam = static_cast<RawFileCamera<T>*>( MLARR::IO::CameraFactory::create(this->camType, paramFilePath)))){
-                    throw "failed to create camera object";
+                    throw std::string("failed to create camera object");
                 }
 
                 
@@ -375,7 +375,7 @@ namespace MLARR{
                 /* Log file */
                 sprintf( buf, fmt_log_psp.c_str(), this->dstDir.c_str() );
                 ofstream ofs(buf);
-                if( !ofs ) throw "failed to open file with format " + fmt_log_psp;
+                if( !ofs ) throw std::string("failed to open file with format ") + fmt_log_psp;
                 
                 /* Main loop */
                 camPhase.initialize();
@@ -476,7 +476,7 @@ namespace MLARR{
                 /* Log file */
                 sprintf( buf, fmt_log_psp.c_str(), this->dstDir.c_str() );
                 ofstream ofs(buf);
-                if( !ofs ) throw "failed to open file with format " + fmt_log_psp;
+                if( !ofs ) throw std::string("failed to open file with format ") + fmt_log_psp;
                 
                 /* Main loop */
                 camPhase.initialize();

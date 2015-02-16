@@ -143,7 +143,7 @@ namespace MLARR{
 			explicit PhaseMedianFilter(MLARR::Basic::Image<T>& _srcImg, int _ksize)
             : ImageAnalyzer<T, T>( _srcImg.height , _srcImg.width, 0, _srcImg ), ksize(_ksize){
 				if( ksize % 2 == 0) {
-					throw "invalid parameter @ MedianFilter constructor.";
+                    throw std::string( "invalid parameter @ PhaseMedianFilter constructor. Kernel size must be add.");
 				}
 			};
 			~PhaseMedianFilter(void){};

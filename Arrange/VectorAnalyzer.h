@@ -108,7 +108,7 @@ namespace MLARR{
 					}
 
 				}else{
-					throw "filter size invalid.";
+					throw std::string("filter size invalid.");
 				}
 			};
 

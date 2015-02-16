@@ -153,13 +153,13 @@ AVTCamera::AVTCamera(const std::string& paramPath)
 : ICamera<unsigned char>(1, 1, 8, 100), UID(0), Abort(false){
     
     if( !vecCam.empty() )
-        throw "AVTCamera cannnot be allocated twice.\n";
+        throw std::string("AVTCamera cannnot be allocated twice.\n");
     
     memset((void*)&(this->Handle), 0, sizeof(tPvHandle) );
     memset((void*)&(this->Frames), 0, sizeof(tPvFrame)*FRAMESCOUNT );
     
     if( PvInitialize() != ePvErrSuccess)
-        throw "Failed to initialize AVTCamera.";
+        throw std::string("Failed to initialize AVTCamera.");
     
     // set ctrl+c handler
     SetConsoleCtrlHandler(CtrlCHandler, 1);
@@ -169,18 +169,18 @@ AVTCamera::AVTCamera(const std::string& paramPath)
     
     // get camera
     if( !this->CameraGet() || Abort){
-        throw "camera not found.\n";
+        throw std::string("camera not found.\n");
     }else{
         std::cout << "found camera connected.\n";
     }
     
     // load camera parameter file.
     if( !this->SetupLoad(paramPath.c_str()))
-        throw "failed to load param file.";
+        throw std::string("failed to load param file.");
     
     // setup camera
     if(!this->CameraSetup())
-        throw "camera setup failed.\n";
+        throw std::string("camera setup failed.\n");
     
     // set up parameters of camera.
     char buf[128];
@@ -668,7 +668,7 @@ void AVTCamera::capture(){
     
     if( this->state == standby ){
         if(!CameraStart()){
-            throw "failed to start camera.\n";
+            throw std::string("failed to start camera.\n");
         }
         this->state = run;
     }

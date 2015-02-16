@@ -314,7 +314,7 @@ namespace MLARR{
 			explicit BinaryOr( MLARR::Basic::Image<T>& _srcImg, const MLARR::Basic::Image<T>& _cmpImg, T _thre = 0 )
 				: ImageAnalyzer<T, T>( _srcImg.height, _srcImg.width, 0, _srcImg), cmpImg(_cmpImg), thre(_thre){
 					if( _srcImg.width != _cmpImg || _srcImg.height != _cmpImg.height ){
-						throw "error : comparison image have invalid size.";
+                        throw std::string("error : comparison image have invalid size.");
 					}
 			};
 			~BinaryOr(void){};
@@ -340,7 +340,7 @@ namespace MLARR{
 			explicit BinaryAnd( MLARR::Basic::Image<T>& _srcImg, const MLARR::Basic::Image<T>& _cmpImg, T _thre = 0 )
 				: ImageAnalyzer<T, T>( _srcImg.height, _srcImg.width, 0, _srcImg), cmpImg(_cmpImg), thre(_thre){
 					if( _srcImg.width != _cmpImg.width || _srcImg.height != _cmpImg.height ){
-						throw "error : comparison image have invalid size.";
+						throw std::string("error : comparison image have invalid size.");
 					}
 			};
 			~BinaryAnd(void){};
@@ -569,7 +569,7 @@ namespace MLARR{
 			explicit MedianFilter(MLARR::Basic::Image<T>& _srcImg, int _ksize)
 				: ImageAnalyzer<T, T>( _srcImg.height , _srcImg.width, 0, _srcImg ), ksize(_ksize){
 				if( ksize % 2 == 0) {
-					throw "invalid parameter @ MedianFilter constructor.";
+                    throw std::string("invalid parameter @ MedianFilter constructor. kernel size must be add.");
 				}
 			};
 			~MedianFilter(void){};

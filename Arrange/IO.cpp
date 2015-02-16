@@ -34,7 +34,7 @@ picojson::object MLARR::IO::loadJsonParam(const std::string& paramFilePath){
     std::string  err;
     picojson::parse(val, str_json.c_str(), str_json.c_str() + str_json.size(), &err);
     if( !err.empty() ){
-        throw "failed to parse json";
+        throw std::string("failed to parse json");
     }
     
     return val.get<picojson::object>();
