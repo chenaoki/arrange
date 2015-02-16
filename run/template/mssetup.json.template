@@ -1,0 +1,5 @@
+{
+    "dstDir" : "/Users/tomii",
+    "numChannel" : 4,
+    "arduinoDeviceFile" : "/dev/cu.usbmodem1411"
+}

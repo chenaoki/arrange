@@ -1,0 +1,31 @@
+{
+	"dstDir" : "SAVE_DIR/SAMPLE_NAME/SESSION_NAME/fbsim",
+
+	"camType" : "raw_max",
+	"rawCamera" : {
+		"srcDir" : "SOURCE_DIR/SAMPLE_NAME/SESSION_NAME",
+		"format" : "%s/FILE_PREFIX%06d.raww",
+		"size" : 512,
+		"frameRate" : 1000,
+		"frame" : {
+			"start":1,
+			"skip":5,
+			"stop":2000
+		}
+	},
+
+	"feedback" : {
+		"minDelta" : 5,
+		"mode" : 1,
+		"frameRange" : 300,
+		"pyramidDown" : 3,
+		"closeRoi" : 0,
+		"winSize" : 20,
+		"roiMargin" : {
+			"top"    : 0.30,
+			"bottom" : 0.10,
+			"left"   : 0.05,
+			"right"  : 0.05
+		}
+	}
+}

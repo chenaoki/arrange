@@ -1,0 +1,51 @@
+{
+	"dstDir" : "SAVE_DIR/SAMPLE_NAME/SESSION_NAME/optical",
+
+	"camType" : "raw_max",
+	"rawCamera" : {
+		"srcDir" : "SOURCE_DIR/SAMPLE_NAME/SESSION_NAME",
+		"format" : "%s/FILE_PREFIX%06d.raww",
+		"size" : IMG_SIZE,
+		"frameRate" : 1000,
+		"frame" : {
+			"start":1,
+			"skip":1,
+			"stop":2000
+		}
+	},
+
+	"opticalOffline" : {
+
+		"menu" : [ "hilbert", "psdetect" ],
+
+		"revnorm" : {
+			"minDelta" : 20
+		},
+
+		"hilbert" : {
+			"size" : 128,
+			"minPeakDistance" : 5,
+			"filterSize" : 40,
+			"elecMaskPath" : "./maskImage/MASK_IMG_NAME.bmp"
+		},
+
+		"psdetect" : {
+			"closeRoi" : 2,
+			"medianFilterSize" : 9,
+			"adjacentSize" : 5,
+			"winSize" :  9,
+			"divThre" : 0.8,
+			"isochrone" : {
+				"max" : 80,
+				"interval" : 5
+			},
+			"roiMargin" : {
+				"top"    : 0.40,
+				"bottom" : 0.20,
+				"left"   : 0.05,
+				"right"  : 0.05
+			}
+		}
+
+	}
+}
