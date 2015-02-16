@@ -15,7 +15,6 @@
 
 #define LINE_LENGTH_MAX 64
 #define BAUDRATE B9600
-#define MODEMDEVICE "/dev/cu.usbmodem1421"
 #define _POSIX_SOURCE 1 /* POSIX compliant source */
 #define FALSE 0
 #define TRUE 1
@@ -31,7 +30,7 @@ namespace MLARR {
             static int isrunning;
             static const int enq = 0x05; // ENQuiry in ASCII table
         public:
-            static int Open(void){
+            static int Open(const std::string& modeDevice){
                 
                 isrunning = FALSE;
                 
@@ -39,10 +38,10 @@ namespace MLARR {
                 /* O_NOCTTY: avoid tty control not-intended ctrl-c caused by noise */
                 /* allow to access a serical interface via fd */
                 
-                fd = open(MODEMDEVICE, O_RDWR | O_NOCTTY );
+                fd = open(modeDevice.c_str(), O_RDWR | O_NOCTTY );
                 
                 if (fd <0) {
-                    printf("open error: %s \n",MODEMDEVICE);
+                    printf("open error: %s \n", modeDevice.c_str() );
                     return -1;
                 }
                 
