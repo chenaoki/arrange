@@ -35,6 +35,9 @@ namespace MLARR{
 		const std::string fmt_raw_min("%s/raw/min/min_%05d.raw");
 		const std::string fmt_raw_opt("%s/raw/opt/opt_%05d.raw");
 		const std::string fmt_raw_hbt("%s/raw/hbt/hbt_%05d.raw");
+        const std::string fmt_jpg_roi("%s/jpg/roi/opt_%05d.jpg");
+        const std::string fmt_jpg_roh("%s/jpg/roi/hvt_%05d.jpg");
+        const std::string fmt_jpg_rop("%s/jpg/roi/psp_%05d.jpg");
 		const std::string fmt_jpg_max("%s/jpg/max/max_%05d.jpg");
 		const std::string fmt_jpg_min("%s/jpg/min/min_%05d.jpg");
 		const std::string fmt_jpg_opt("%s/jpg/opt/opt_%05d.jpg");
@@ -60,8 +63,7 @@ namespace MLARR{
             int hbt_size;
             int hbt_minPeakDistance;
             int hbt_filSize;
-            int hbt_elecCompPix;
-            std::string hbt_elecImagePath;
+            std::string hbt_elecMaskPath;
             int psp_closeRoi;
             int psp_medianSize;
             int psp_winSize;
@@ -93,6 +95,8 @@ namespace MLARR{
                 temp = this->dstDir + "/raw/hbt";
                 mkdir( temp.c_str() , 0777);
                 temp = this->dstDir + "/jpg";
+                mkdir( temp.c_str() , 0777);
+                temp = this->dstDir + "/jpg/roi";
                 mkdir( temp.c_str() , 0777);
                 temp = this->dstDir + "/jpg/max";
                 mkdir( temp.c_str() , 0777);
@@ -132,8 +136,7 @@ namespace MLARR{
                 hbt_size = atoi( hbt["size"].to_str().c_str() );
                 hbt_filSize = atoi( hbt["filterSize"].to_str().c_str() );
                 hbt_minPeakDistance = atoi( hbt["minPeakDistance"].to_str().c_str());
-                hbt_elecCompPix = atoi( hbt["elecCompPix"].to_str().c_str());
-                hbt_elecImagePath = hbt["elecImagePath"].get<std::string>();
+                hbt_elecMaskPath = hbt["elecMaskPath"].get<std::string>();
                 
                 picojson::object& psp = opt["psdetect"].get<picojson::object>();
                 psp_closeRoi = atoi( psp["closeRoi"].to_str().c_str() );
@@ -180,6 +183,7 @@ namespace MLARR{
                 Display<T> disp_cam("gray", *(this->cam), ( 1 << this->cam->bits )-1, 0, colMap_gray );
                 Display<T> disp_max("max", maxEng, ( 1 << this->cam->bits )-1, 0, colMap_gray );
                 Display<T> disp_min("min", minEng, ( 1 << this->cam->bits )-1, 0, colMap_gray );
+                Display<unsigned char> disp_roi("roi", optEng.getRoi(), 1 , 0, colMap_gray );
                 Display<double> disp_opt("optical", optEng, 1.0, 0.0, colMap_orange);
                 
                 while( stop != this->cam->state ){
@@ -189,12 +193,13 @@ namespace MLARR{
                     disp_cam.show( this->cam->getTime(), white );
                 }
                 optEng.updateRange();
-                dump_roi.dump(this->cam->f_tmp);
-                
+                disp_roi.show();
                 disp_max.show();
                 disp_min.show();
-                    disp_max.save( this->dstDir, fmt_jpg_max, this->cam->f_tmp);
+                disp_roi.save( this->dstDir, fmt_jpg_roi, this->cam->f_tmp);
+                disp_max.save( this->dstDir, fmt_jpg_max, this->cam->f_tmp);
                 disp_min.save( this->dstDir, fmt_jpg_min, this->cam->f_tmp);
+                dump_roi.dump(this->cam->f_tmp);
                 
                 this->cam->initialize();
                 while( stop != this->cam->state ){
@@ -249,14 +254,13 @@ namespace MLARR{
                 HilbertAnalyzer<double> hilbertEng(
                    *imgOpt, hbt_minPeakDistance, hbt_filSize,
                    this->cam->f_start,this->cam->f_skip,this->cam->f_stop);
-                ElectrodePhaseComplement imgComp( hilbertEng, hbt_elecImagePath, hbt_elecCompPix);
                 
                 /* Dumper */
                 Dumper<double> dump_hilbert( hilbertEng, this->dstDir, fmt_raw_hbt);
                 
                 /* Display */
                 Display<double> disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
-                Display<double> disp_hilbert("hilbert", imgComp, M_PI, -M_PI, colMap_hsv);
+                Display<double> disp_hilbert("hilbert", hilbertEng, M_PI, -M_PI, colMap_hsv);
                 
                 /* ROI setting */
                 camRoi.capture();
@@ -268,12 +272,17 @@ namespace MLARR{
                 }else{
                     imgROI = &camRoi;
                 }
-                hilbertEng.setRoi( *imgROI );
-                imgComp.setRoi( *imgROI );
-                Dumper<unsigned char> dump_roi_hbt( *imgROI, this->dstDir, fmt_raw_roh);
-                dump_roi_hbt.dump( camRoi.f_tmp );
-                Display<unsigned char> disp_roi("roi", *imgROI, 1, 0, colMap_gray);
+                Image<unsigned char> imgMask(imgROI->height, imgROI->width, hbt_elecMaskPath);
+                BinaryAnd<unsigned char> imgRoiMasked( *imgROI, imgMask);
+                imgRoiMasked.execute();
+                hilbertEng.setRoi( imgRoiMasked );
+                Display<unsigned char> disp_roi("roi(original)", camRoi, 1, 0, colMap_gray);
+                Display<unsigned char> disp_roh("roi(hilbert)", imgRoiMasked, 1, 0, colMap_gray);
+                Dumper<unsigned char> dump_roh( imgRoiMasked, this->dstDir, fmt_raw_roh);
                 disp_roi.show();
+                disp_roh.show();
+                disp_roh.save( this->dstDir, fmt_jpg_roh, this->cam->f_tmp);
+                dump_roh.dump( camRoi.f_tmp );
                 
                 /* Main loop */
                 camOpt.initialize();
@@ -289,7 +298,6 @@ namespace MLARR{
                 while( stop != camOpt.state && error != camOpt.state ){
                     camOpt.capture();
                     hilbertEng.execute();
-                    imgComp.execute();
                     
                     disp_opt.show( camOpt.getTime(), white );
                     disp_hilbert.show( camOpt.getTime(), red );
@@ -318,19 +326,21 @@ namespace MLARR{
                 char buf[255];
                 
                 /* Camera */
-                RawFileCamera<double> camOpt(
-                    this->cam->width, this->cam->height, std::numeric_limits<double>::digits, this->cam->fps,
+                RawFileCamera<double> camOpt
+                    (this->cam->width, this->cam->height,
+                     std::numeric_limits<double>::digits, this->cam->fps,
                     this->dstDir, fmt_raw_opt, this->cam->f_start,this->cam->f_skip,this->cam->f_stop );
-                RawFileCamera<double> camPhase(
-                    this->cam->width/hbt_compRate, this->cam->height/hbt_compRate, std::numeric_limits<double>::digits, this->cam->fps,
-                    this->dstDir, fmt_raw_hbt, this->cam->f_start,this->cam->f_skip,this->cam->f_stop );
-                RawFileCamera<unsigned char> camRoi(
-                    this->cam->width/hbt_compRate, this->cam->height/hbt_compRate, std::numeric_limits<char>::digits, this->cam->fps,
-                    this->dstDir, fmt_raw_roh, 1,1,1);
+                RawFileCamera<double> camPhase
+                    (this->cam->width/hbt_compRate, this->cam->height/hbt_compRate,
+                     std::numeric_limits<double>::digits, this->cam->fps,
+                     this->dstDir, fmt_raw_hbt, this->cam->f_start,this->cam->f_skip,this->cam->f_stop );
+                RawFileCamera<unsigned char> camRoi
+                    (this->cam->width/hbt_compRate, this->cam->height/hbt_compRate,
+                     std::numeric_limits<char>::digits, this->cam->fps,
+                     this->dstDir, fmt_raw_roh, 1,1,1);
                 
                 /* Analyzer */
-                MorphImage<unsigned char>            imgRoiOpen( camRoi, psp_closeRoi);
-                MorphImage<unsigned char>            imgRoiClose( imgRoiOpen, -2 * psp_closeRoi);
+                MorphImage<unsigned char>            imgRoiClose( camRoi, -1 * psp_closeRoi);
                 MedianFilter<double>                 imgMed( camPhase, psp_closeRoi );
                 PhaseMedianFilter<double>            imgFil( imgMed, psp_medianSize );
                 DivPhaseSingularityAnalyzer<double>  imgDivPSP( imgFil, psp_winSize, psp_divThre );
@@ -338,7 +348,6 @@ namespace MLARR{
                 
                 /* ROI setting */
                 camRoi.capture();
-                imgRoiOpen.execute();
                 imgRoiClose.execute();
                 for( int j = 0; j < camRoi.height; j++ ){
                     if( j <= camRoi.height * psp_roiMarginTop || j >= camRoi.height * (1 - psp_roiMarginBottom)) {
@@ -355,6 +364,9 @@ namespace MLARR{
                     }
                 }
                 imgDivPSP.setRoi ( imgRoiClose );
+                Display<unsigned char> disp_rop("roi(psp detection)", imgRoiClose, 1, 0, colMap_gray );
+                disp_rop.show();
+                disp_rop.save(this->dstDir, fmt_jpg_rop, 0);
                 
                 /* Display */
                 Display<double>         disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
@@ -409,15 +421,18 @@ namespace MLARR{
                 char buf[255];
                 
                 /* Camera */
-                RawFileCamera<double> camOpt(
-                                             this->cam->width, this->cam->height, std::numeric_limits<double>::digits, this->cam->fps,
-                                             this->dstDir, fmt_raw_opt, this->cam->f_start,this->cam->f_skip,this->cam->f_stop );
-                RawFileCamera<double> camPhase(
-                                               this->cam->width/hbt_compRate, this->cam->height/hbt_compRate, std::numeric_limits<double>::digits, this->cam->fps,
-                                               this->dstDir, fmt_raw_hbt, this->cam->f_start,this->cam->f_skip,this->cam->f_stop );
-                RawFileCamera<unsigned char> camRoi(
-                                                    this->cam->width/hbt_compRate, this->cam->height/hbt_compRate, std::numeric_limits<char>::digits, this->cam->fps,
-                                                    this->dstDir, fmt_raw_roh, 1,1,1);
+                RawFileCamera<double> camOpt
+                    (this->cam->width, this->cam->height,
+                     std::numeric_limits<double>::digits, this->cam->fps,
+                     this->dstDir, fmt_raw_opt, this->cam->f_start,this->cam->f_skip,this->cam->f_stop );
+                RawFileCamera<double> camPhase
+                    (this->cam->width/hbt_compRate, this->cam->height/hbt_compRate,
+                     std::numeric_limits<double>::digits, this->cam->fps,
+                     this->dstDir, fmt_raw_hbt, this->cam->f_start,this->cam->f_skip,this->cam->f_stop );
+                RawFileCamera<unsigned char> camRoi
+                    (this->cam->width/hbt_compRate, this->cam->height/hbt_compRate,
+                     std::numeric_limits<char>::digits, this->cam->fps,
+                     this->dstDir, fmt_raw_roh, 1,1,1);
                 
                 /* Analyzer */
                 MorphImage<unsigned char>            imgRoiOpen( camRoi, psp_closeRoi);
@@ -430,7 +445,7 @@ namespace MLARR{
                 PositiveFilter<unsigned char>        filPos(0);
                 ActivationTimeMap<
                 unsigned char,
-                PositiveFilter<unsigned char> >  imgActTime(imgFrontClose, filPos, hbt_minPeakDistance);
+                PositiveFilter<unsigned char> >      imgActTime(imgFrontClose, filPos, hbt_minPeakDistance);
                 MedianFilter<unsigned short>         imgATMFil( imgActTime, 5 );
                 Image<unsigned char>                 imgIso( imgFront.height, imgFront.width, 0 );
                 
