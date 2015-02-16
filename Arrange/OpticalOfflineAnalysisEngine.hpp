@@ -341,8 +341,7 @@ namespace MLARR{
                 
                 /* Analyzer */
                 MorphImage<unsigned char>            imgRoiClose( camRoi, -1 * psp_closeRoi);
-                MedianFilter<double>                 imgMed( camPhase, psp_closeRoi );
-                PhaseMedianFilter<double>            imgFil( imgMed, psp_medianSize );
+                PhaseMedianFilter<double>            imgFil( camPhase, psp_medianSize );
                 DivPhaseSingularityAnalyzer<double>  imgDivPSP( imgFil, psp_winSize, psp_divThre );
                 LabelImage                           imgLabel(dynamic_cast<Image<unsigned char>&>(imgDivPSP));
                 
@@ -385,7 +384,6 @@ namespace MLARR{
                     camPhase.capture();
                     if( camPhase.f_tmp - camPhase.f_start <= hbt_minPeakDistance * 4 ) continue;
                     camOpt.capture();
-                    imgMed.execute();
                     imgFil.execute();
                     imgDivPSP.execute();
                     imgLabel.execute();
@@ -393,7 +391,6 @@ namespace MLARR{
                     /* output PS info.*/
                     ofs << camPhase.getTime() << "," ;
                     for( std::vector<MLARR::Basic::Point<double> >::iterator it = imgLabel.vec_ps.begin(); it != imgLabel.vec_ps.end(); it++ ){
-                        //dispExc.drawRect( it->getX(), it->getY(), 2, white );
                         dispFil.drawRect( it->getX(), it->getY(), 2, white );
                         ofs << it->getX()*hbt_compRate << "," << it->getY()*hbt_compRate << ",";
                     }
