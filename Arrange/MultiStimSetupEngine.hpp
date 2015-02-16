@@ -38,6 +38,9 @@ namespace MLARR{
         
 		class MultiStimSetupEngine : public Engine{
         private:
+            int numChannel;
+            std::string arduinoDeviceFile;
+        private:
             vector<map<string, int> > config;
             typedef enum{
                 ST_OFF = 0, ST_FLT, ST_POS, ST_NEG
@@ -45,8 +48,12 @@ namespace MLARR{
         public:
             MultiStimSetupEngine( std::string& paramFilePath) : Engine(paramFilePath){
                 
+                /* load parameter from file */
                 picojson::object obj = MLARR::IO::loadJsonParam(paramFilePath);
-                int numChannel = atoi( obj["channelNum"].to_str().c_str() );
+                this->numChannel = atoi( obj["numChannel"].to_str().c_str() );
+                cout << "numChannel : " << this->numChannel << endl;
+                this->arduinoDeviceFile = obj["arduinoDeviceFile"].to_str();
+                cout << "arduinoDeviceFile : " << this->arduinoDeviceFile << endl;
                 
                 map<string,int> m_default;
                 m_default["trigger"] = -1;
@@ -55,11 +62,11 @@ namespace MLARR{
                 m_default["seq"] = 0;
                 m_default["delay"] = 2;
                 
-                for(int i =0; i < numChannel; i++){
+                for(int i =0; i < this->numChannel; i++){
                     config.push_back(m_default);
                 }
                 
-                if( ArduinoSerial::Open() < 0 ){
+                if( ArduinoSerial::Open(arduinoDeviceFile) < 0 ){
                     throw string("failed to open arduino serial port.");
                 }
                 signal(SIGINT, ArduinoSerial::Interrupt );
