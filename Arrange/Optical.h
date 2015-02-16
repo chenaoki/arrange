@@ -40,7 +40,7 @@ namespace MLARR{
             return diff;
         };
         
-        inline double phaseDiv( std::vector<double> &vec ){
+        inline double phaseDiv( std::vector<double> &vec, int maxCount ){
             double div = 0.0;
             double ave_cos = 0.0;
             double ave_sin = 0.0;
@@ -53,6 +53,8 @@ namespace MLARR{
                 ave_sin /= (double)vec.size();
             }
             div = 1.0 - sqrt( ave_cos * ave_cos + ave_sin * ave_sin );
+            if(maxCount)
+                div *= vec.size() / static_cast<double>(maxCount);
             return div;
         };
         
@@ -394,7 +396,7 @@ namespace MLARR{
                                     }
 								}
 							}
-                            double div = phaseDiv( vec );
+                            double div = phaseDiv( vec, winSize*winSize );
 							this->imgDiv.setValue( w_c, h_c, div );
                             this->setValue(w_c, h_c, static_cast<T>(div) > this->thre ? 1 : 0); // Binarize
 						}
