@@ -64,7 +64,7 @@ namespace MLARR{
             PositiveFilter(unsigned char init)
             : TimeSeriesFilter<T, unsigned char>(init)
             {};
-            PositiveFilter(const NotchFilter<T>& rhs)
+            PositiveFilter(const PositiveFilter<T>& rhs)
             : TimeSeriesFilter<T, unsigned char>(rhs.ret)
             {};
             ~PositiveFilter(void){};
