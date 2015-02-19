@@ -5,3 +5,4 @@ Arrange.xcodeproj/*
 Arrange/Arrange
 Arrange/obj/*
 BAT/*
+run/*.json

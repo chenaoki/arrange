@@ -5,7 +5,7 @@
 	"rawCamera" : {
 		"srcDir" : "SOURCE_DIR/SAMPLE_NAME/SESSION_NAME",
 		"format" : "%s/FILE_PREFIX%06d.raww",
-		"size" : 512,
+		"size" : IMG_SIZE,
 		"frameRate" : 1000,
 		"frame" : {
 			"start":1,

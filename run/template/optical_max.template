@@ -16,7 +16,7 @@
 
 	"opticalOffline" : {
 
-		"menu" : [ "hilbert", "psdetect" ],
+		"menu" : [ "optical","hilbert", "psdetect" ],
 
 		"revnorm" : {
 			"minDelta" : 20
@@ -40,8 +40,8 @@
 				"interval" : 5
 			},
 			"roiMargin" : {
-				"top"    : 0.40,
-				"bottom" : 0.20,
+				"top"    : 0.10,
+				"bottom" : 0.05,
 				"left"   : 0.05,
 				"right"  : 0.05
 			}
