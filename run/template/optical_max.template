@@ -16,7 +16,7 @@
 
 	"opticalOffline" : {
 
-		"menu" : [ "optical","hilbert", "psdetect" ],
+		"menu" : [ "revnorm","hilbert", "psdetect" ],
 
 		"revnorm" : {
 			"minDelta" : 20
