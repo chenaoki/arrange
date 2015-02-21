@@ -48,6 +48,7 @@ namespace MLARR{
             int nMode;
             int nFrameRange;
             int nPyrDown;
+            int psp_procImageSize;
             int psp_winSize;
             int psp_closeRoi;
             T rnm_minDelta;
@@ -76,6 +77,7 @@ namespace MLARR{
                 nFrameRange = atoi( fb["frameRange"].to_str().c_str() );
                 nPyrDown = atoi( fb["pyramidDown"].to_str().c_str() );
                 rnm_minDelta = atoi( fb["minDelta"].to_str().c_str() );
+                psp_procImageSize = atoi( fb["procImageSize"].to_str().c_str() );
                 psp_winSize = atoi( fb["winSize"].to_str().c_str() );
                 psp_closeRoi = atoi( fb["closeRoi"].to_str().c_str() );
                 picojson::object psp_roi = fb["roiMargin"].get<picojson::object>();
@@ -124,16 +126,19 @@ namespace MLARR{
                 char buf[256];
                 
                 /* ImageAnalyzer */
-
-                ImageShrinker<T> imgH(*(this->cam));
-                ImageShrinker<T> imgQ(dynamic_cast<Image<T>&>(imgH));
+                std::vector< Image<T>* > vecCamProc;
+                vecCamProc.push_back(this->cam);
+                while( vecCamProc.back()->width > psp_procImageSize){
+                    vecCamProc.push_back( dynamic_cast< Image<T>* >(new ImageShrinker<T>( *vecCamProc.back() )));
+                }
+                Image<T>* imgCam = vecCamProc.back();
                 
-                MaxImageAnalyzer<T>                    maxEng( 0, imgQ);
-                MinImageAnalyzer<T>                    minEng( std::numeric_limits<T>::max(), imgQ );
-                OpticalImageAnalyzer<T>                imgOpt( imgQ, maxEng, minEng, rnm_minDelta);
+                MaxImageAnalyzer<T>                    maxEng( 0, *imgCam );
+                MinImageAnalyzer<T>                    minEng( std::numeric_limits<T>::max(), *imgCam );
+                OpticalImageAnalyzer<T>                imgOpt( *imgCam, maxEng, minEng, rnm_minDelta);
                 MorphImage<unsigned char>              imgRoiOpen( imgOpt.getRoi(), psp_closeRoi);
                 MorphImage<unsigned char>              imgRoiClose( imgRoiOpen, -2 * psp_closeRoi);
-                SpacialFilter<T>                       imgFil( imgQ, 5, 5, coefficients.vec_gaussian_5x5);
+                SpacialFilter<T>                       imgFil( *imgCam, 5, 5, coefficients.vec_gaussian_5x5);
                 SimplePhaseSingularityAnalyzer<T>      imgSPS( imgFil, MLARR::Analyzer::coefficients.vec_spFIR, psp_winSize );
                 PyramidDetector<
                     ImageThinOut<T>,
@@ -152,7 +157,7 @@ namespace MLARR{
 
                 
                 /* Display */
-                Display<T> disp_cam( "camera input (q)", imgQ, ( 1 << this->cam->bits )-1, 0, colMap_gray, imgQ.width, imgQ.height );
+                Display<T> disp_cam( "camera input", *imgCam, ( 1 << this->cam->bits )-1, 0, colMap_gray, imgCam->width, imgCam->height );
                 Display<double> disp_opt( "optical", imgOpt, 1.0, 0.0, colMap_orange);
                 Display<unsigned char> disp_pyr("Pyramid output", imgPyr, nPyrDown, 0, colMap_gray);
                 Display<unsigned char> disp_roi("Closed ROI", imgOpt.getRoi(), 1, 0, colMap_gray);
@@ -182,8 +187,10 @@ namespace MLARR{
 
                         /* Capture */
                         cam->capture();
-                        imgH.execute();
-                        imgQ.execute();
+                        for(int i = 1; i < vecCamProc.size(); i++){
+                            dynamic_cast< ImageAnalyzer<T, T>* >( vecCamProc[i] )->execute();
+                        }
+                        
                         if( e_mode_run != nMode && e_mode_capture != nMode ){
                             disp_cam.show(cam->getTime(), white);
                         }
@@ -231,8 +238,6 @@ namespace MLARR{
                         }
                         
                         /* Pre-operation */
-                        imgH.execute();
-                        imgQ.execute();
                         imgOpt.execute();
 
                         /* Time count start */
@@ -262,7 +267,7 @@ namespace MLARR{
                             }
                             disp_pyr.show();
                             disp_pyr.save(this->dstDir, this->fmt_jpg_psp, this->cam->f_tmp );
-                            cvWaitKey(500);
+                            cvWaitKey(5);
                         }
                         gettimeofday(&t, NULL);
                         msecs += ( t.tv_sec - s.tv_sec )  * 1000 + static_cast<double>(t.tv_usec - s.tv_usec) / 1000;
