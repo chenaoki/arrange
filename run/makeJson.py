@@ -41,7 +41,7 @@ if __name__ == '__main__':
         res = cur.fetchone()
         sample_name = res[0]
         flg_mask = int(res[1])
-        cur.execute( 'select id, name, img_size from sessions where sample_id = \"%s\"' % sample_id )
+        cur.execute( 'select id, name, img_size from sessions where sample_id = \"%s\" and spiral = 1' % sample_id )
         session_list = [ {"id" : res[0], "name" : res[1], "img_size" : res[2] }  for res in cur.fetchall()] # (id, name) tupple
 
         print sample_name
