@@ -10,10 +10,12 @@ if __name__ ==  '__main__':
         print 'Syntax'
         print './execute.py [engine name]'
         exit()
-    files = commands.getoutput('ls ./*.json').replace('\n', ' ').split(' ')
-    print files
+    engine = sys.argv[1]
+    files = commands.getoutput('ls ./%s*.json' % engine).replace('\n', ' ').split(' ')
     for f in files:
-        if f == "./ArrangeParam.json":
-            continue
         print f
-        os.system("Arrange -e %s -p %s" %( sys.argv[1], f ))
+    for i, f in enumerate(files):
+        cmd = "Arrange -e %s -p %s" %( engine, f )
+        print "%d/%d : " % ( i+1, len(files) ), cmd
+        os.system(cmd)
+        print "done"
