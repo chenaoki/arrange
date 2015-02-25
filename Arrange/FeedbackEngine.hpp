@@ -218,7 +218,6 @@ namespace MLARR{
                         if( e_mode_monitor == nMode ) continue;
                         if( e_mode_dump == nMode ){
                             dump_cam.dump( this->cam->f_tmp );
-                            disp_cam.save( this->dstDir, this->fmt_jpg_cam, cam->f_tmp );
                         }
                         if( e_mode_capture == nMode ) continue;
 
@@ -291,10 +290,10 @@ namespace MLARR{
                             disp_opt.save( this->dstDir, this->fmt_jpg_det, cam->getTime());
                             for( int i = 0; i < vec_disp_sp.size(); i++){
                                 sprintf( buf, "%%s/jpg/pyr/%02d/%%06d.jpg", i);
-                                vec_disp_sp[i]->show();
+                                vec_disp_sp[i]->show(cam->getTime(), white);
                                 vec_disp_sp[i]->save(this->dstDir, buf, this->cam->f_tmp);
                             }
-                            disp_pyr.show();
+                            disp_pyr.show(cam->getTime(), white);
                             disp_pyr.save(this->dstDir, this->fmt_jpg_psp, this->cam->f_tmp );
                             cvWaitKey(5);
                         }
