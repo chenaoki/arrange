@@ -22,6 +22,11 @@
 #include "Engine.h"
 #include "AVTCamera.h"
 
+/* for CvKalman */
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
+#include <opencv2/legacy/legacy.hpp>
+
 using namespace std;
 using namespace MLARR::Basic;
 using namespace MLARR::IO;
@@ -52,6 +57,8 @@ namespace MLARR{
             int psp_winSize;
             int psp_closeRoi;
             T rnm_minDelta;
+            double psp_kalmanProcNoiseCov;
+            double psp_kalmanMeasNoiseCov;
             double psp_roiMarginTop;
             double psp_roiMarginBottom;
             double psp_roiMarginLeft;
@@ -80,6 +87,9 @@ namespace MLARR{
                 psp_procImageSize = atoi( fb["procImageSize"].to_str().c_str() );
                 psp_winSize = atoi( fb["winSize"].to_str().c_str() );
                 psp_closeRoi = atoi( fb["closeRoi"].to_str().c_str() );
+                picojson::object psp_kalman = fb["kalman"].get<picojson::object>();
+                psp_kalmanProcNoiseCov = atof( psp_kalman["procNoiseCov"].to_str().c_str() );
+                psp_kalmanMeasNoiseCov = atof( psp_kalman["measNoiseCov"].to_str().c_str() );
                 picojson::object psp_roi = fb["roiMargin"].get<picojson::object>();
                 psp_roiMarginTop = atof( psp_roi["top"].to_str().c_str() );
                 psp_roiMarginBottom = atof( psp_roi["bottom"].to_str().c_str() );
@@ -145,6 +155,17 @@ namespace MLARR{
                     SimplePhaseSingularityAnalyzer<T>,
                     T,  unsigned char>                 imgPyr( imgFil, &imgSPS, nPyrDown);
                 ImageCOG<unsigned char>                imgCOG( imgPyr );
+                
+                /* Kalman Filter setting */
+                CvKalman *kalman = cvCreateKalman(4, 2);
+                cvSetIdentity(kalman->measurement_matrix, cvRealScalar(1.0));
+                cvSetIdentity(kalman->process_noise_cov, cvRealScalar(psp_kalmanProcNoiseCov));
+                cvSetIdentity(kalman->measurement_noise_cov, cvRealScalar(psp_kalmanMeasNoiseCov));
+                cvSetIdentity(kalman->error_cov_post, cvRealScalar(1.0));
+                kalman->DynamMatr[0]  = 1.0; kalman->DynamMatr[1]  = 0.0; kalman->DynamMatr[2]  = 1.0; kalman->DynamMatr[3]  = 0.0;
+                kalman->DynamMatr[4]  = 0.0; kalman->DynamMatr[5]  = 1.0; kalman->DynamMatr[6]  = 0.0; kalman->DynamMatr[7]  = 1.0;
+                kalman->DynamMatr[8]  = 0.0; kalman->DynamMatr[9]  = 0.0; kalman->DynamMatr[10] = 1.0; kalman->DynamMatr[11] = 0.0;
+                kalman->DynamMatr[12] = 0.0; kalman->DynamMatr[13] = 0.0; kalman->DynamMatr[14] = 0.0; kalman->DynamMatr[15] = 1.0;
                 
                 /* Dumper */
                 Dumper<T> dump_cam( *(this->cam), this->dstDir, this->fmt_raw_cam);
@@ -249,15 +270,23 @@ namespace MLARR{
                         imgPyr.mergeSum(); // Merge pyramid detection result
                         imgCOG.execute();
                         
+                        /* Kalman Filtering */
+                        if( imgCOG.x >= 0 && imgCOG.y >= 0 ){
+                            float meas[] = {static_cast<float>(imgCOG.x), static_cast<float>(imgCOG.y)};
+                            CvMat measMat = cvMat(2, 1, CV_32FC1, meas);
+                            cvKalmanCorrect(kalman, &measMat); // correction phase
+                        }
+                        const CvMat *predMat = cvKalmanPredict(kalman); // prediction phase
+                        
                         /* Log PS info.*/
                         ofs << cam->getTime();
-                        ofs << "," << imgCOG.x;
-                        ofs << "," << imgCOG.y;
+                        ofs << "," << predMat->data.fl[0];
+                        ofs << "," << predMat->data.fl[1];
                         ofs << std::endl;
                         
                         /* Show and save images */
                         if( e_mode_dump == nMode ){
-                            disp_opt.drawRect( (int)imgCOG.x, (int)imgCOG.y, 2, MLARR::IO::green );
+                            disp_opt.drawRect( (int)predMat->data.fl[0], (int)predMat->data.fl[1], 2, MLARR::IO::green );
                             disp_opt.show( cam->getTime(), white);
                             disp_opt.save( this->dstDir, this->fmt_jpg_det, cam->getTime());
                             for( int i = 0; i < vec_disp_sp.size(); i++){
