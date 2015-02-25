@@ -696,9 +696,12 @@ namespace MLARR{
                         }
                     }
                 }
-                if( cnt ){
+                if( cnt && num > 0.0){
                     x = meanX / num;
                     y = meanY / num;
+                }else{
+                    x = -1;
+                    y = -1;
                 }
                 *dynamic_cast<Image<T>*>(this) = this->srcImg;
             };
