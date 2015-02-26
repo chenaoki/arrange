@@ -20,11 +20,15 @@
 		"mode" : 1,
 		"frameRange" : 300,
 		"pyramidDown" : 3,
-		"closeRoi" : 0,
+		"closeRoi" : 10,
 		"winSize" : 20,
+		"kalman":{
+			"procNoiseCov" : 1e-5,
+			"measNoiseCov" : 5e-1
+		},
 		"roiMargin" : {
-			"top"    : 0.30,
-			"bottom" : 0.10,
+			"top"    : 0.20,
+			"bottom" : 0.05,
 			"left"   : 0.05,
 			"right"  : 0.05
 		}
