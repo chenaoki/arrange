@@ -128,16 +128,16 @@ const double MLARR::Analyzer::Coeffs::SPFIR_COEFS[SPFIR_DIM] = {
 		1.6747156, 0.6397844, 0.3998027, -0.3998027, -0.6397844, -1.6747156};
 
 
-const double MLARR::Analyzer::Coeffs::CURL_X_COEFS[9] = {
-    -1, -1, -1,
-     0,  0,  0,
-     1,  1,  1,
+const double MLARR::Analyzer::Coeffs::NABLA_X_COEFS[9] = {
+   -0.5,  0, 0.5,
+     -1, 0,   1,
+   -0.5,  0, 0.5
 };
 
-const double MLARR::Analyzer::Coeffs::CURL_Y_COEFS[9] = {
-     1,  0, -1,
-     1,  0, -1,
-     1,  0, -1,
+const double MLARR::Analyzer::Coeffs::NABLA_Y_COEFS[9] = {
+    0.5,  1, 0.5,
+      0,  0,   0,
+   -0.5, -1,-0.5
 };
 
 const unsigned char MLARR::Analyzer::Coeffs::RGB_HSV[256][3]= {

@@ -64,6 +64,7 @@ namespace MLARR{
             int hbt_minPeakDistance;
             int hbt_filSize;
             std::string hbt_elecMaskPath;
+            std::string psp_detectionAlgo;
             int psp_closeRoi;
             int psp_medianSize;
             int psp_winSize;
@@ -139,10 +140,11 @@ namespace MLARR{
                 hbt_elecMaskPath = hbt["elecMaskPath"].get<std::string>();
                 
                 picojson::object& psp = opt["psdetect"].get<picojson::object>();
+                psp_detectionAlgo = psp["detectionAlgo"].get<std::string>();
                 psp_closeRoi = atoi( psp["closeRoi"].to_str().c_str() );
                 psp_medianSize = atoi( psp["medianFilterSize"].to_str().c_str());
                 psp_winSize = atoi( psp["winSize"].to_str().c_str() );
-                psp_divThre = atof( psp["divThre"].to_str().c_str() );
+                psp_divThre = atof( psp["thre"].to_str().c_str() );
                 
                 picojson::object& psp_roi = psp["roiMargin"].get<picojson::object>();
                 psp_roiMarginTop = atof( psp_roi["top"].to_str().c_str() );
@@ -342,8 +344,17 @@ namespace MLARR{
                 /* Analyzer */
                 MorphImage<unsigned char>            imgRoiClose( camRoi, -1 * psp_closeRoi);
                 PhaseMedianFilter<double>            imgFil( camPhase, psp_medianSize );
-                DivPhaseSingularityAnalyzer<double>  imgDivPSP( imgFil, psp_winSize, psp_divThre );
-                LabelImage                           imgLabel(dynamic_cast<Image<unsigned char>&>(imgDivPSP));
+                ImageAnalyzer<double, unsigned char> *imgPSP = NULL;
+                if( psp_detectionAlgo == "bray" ){
+                    imgPSP = new BrayPhaseSingularityAnalyzer<double>(imgFil, psp_divThre );
+                }else if( psp_detectionAlgo == "div" ){
+                    imgPSP = new DivPhaseSingularityAnalyzer<double>( imgFil, psp_winSize, psp_divThre );;
+                }
+                if( NULL == imgPSP ){
+                    throw std::string("Unrecognized PSP detection algorithm") + psp_detectionAlgo;
+                }
+                //DivPhaseSingularityAnalyzer<double>  imgDivPSP( imgFil, psp_winSize, psp_divThre );
+                LabelImage                           imgLabel(dynamic_cast<Image<unsigned char>&>(*imgPSP));
                 
                 /* ROI setting */
                 camRoi.capture();
@@ -362,7 +373,7 @@ namespace MLARR{
                         }
                     }
                 }
-                imgDivPSP.setRoi ( imgRoiClose );
+                imgPSP->setRoi ( imgRoiClose );
                 Display<unsigned char> disp_rop("roi(psp detection)", imgRoiClose, 1, 0, colMap_gray );
                 disp_rop.show();
                 disp_rop.save(this->dstDir, fmt_jpg_rop, 0);
@@ -370,7 +381,7 @@ namespace MLARR{
                 /* Display */
                 Display<double>         disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
                 Display<double>         dispFil("Filtered Phase Map", imgFil, M_PI, -M_PI, colMap_hsv);
-                Display<double>         dispDiv("Phase div", imgDivPSP.imgDiv, 1.0, 0, colMap_gray);
+                Display<unsigned char>  dispPSP("Phase singularity", *imgPSP, 1, 0, colMap_gray);
 
                 /* Log file */
                 sprintf( buf, fmt_log_psp.c_str(), this->dstDir.c_str() );
@@ -385,7 +396,7 @@ namespace MLARR{
                     if( camPhase.f_tmp - camPhase.f_start <= hbt_minPeakDistance * 4 ) continue;
                     camOpt.capture();
                     imgFil.execute();
-                    imgDivPSP.execute();
+                    imgPSP->execute();
                     imgLabel.execute();
                     
                     /* output PS info.*/
@@ -399,9 +410,10 @@ namespace MLARR{
                     /* show images.*/
                     disp_opt.show( camPhase.getTime(), red);
                     dispFil.show( camPhase.getTime(), red);
-                    dispDiv.show( camPhase.getTime(), red );
+                    dispPSP.show( camPhase.getTime(), red );
                     
                     /* save images */
+                    dispPSP.save(this->dstDir, fmt_jpg_psp, camPhase.getTime());
                     dispFil.save(this->dstDir, fmt_jpg_hbf, camPhase.getTime());
                     
                     //cvWaitKey(-1);

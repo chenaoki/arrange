@@ -29,7 +29,7 @@ namespace MLARR{
         
         /* convert phase value to be in range from -PI to PI */
         inline double phaseComplement(double x){
-            int pos = static_cast<int>( ( x + M_PI ) / (2 * M_PI) );
+            int pos = floor( ( x + M_PI ) / (2 * M_PI) );
             return x - pos * 2 * M_PI;
         };
         
@@ -317,20 +317,22 @@ namespace MLARR{
 		};
         
         template <class T>
-		class NormalPhaseSingularityAnalyzer : public ImageAnalyzer<T,T>{
+		class BrayPhaseSingularityAnalyzer : public ImageAnalyzer<T,unsigned char>{
         public:
+            double thre;
             ImageDiffX<T> imgDiffX;
             ImageDiffY<T> imgDiffY;
             SpacialFilter<T> imgCurlX;
             SpacialFilter<T> imgCurlY;
 		public:
-			explicit NormalPhaseSingularityAnalyzer( MLARR::Basic::Image<double>& _src )
-			:ImageAnalyzer<double,double>( _src.height, _src.width, 0, _src),
+			explicit BrayPhaseSingularityAnalyzer( MLARR::Basic::Image<double>& _src, double _thre )
+			:ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src),
+            thre( _thre ),
             imgDiffX( this->srcImg ), imgDiffY( this->srcImg ),
-            imgCurlX( this->imgDiffX, 3, 3, MLARR::Analyzer::coefficients.vec_curlX ),
-            imgCurlY( this->imgDiffY, 3, 3, MLARR::Analyzer::coefficients.vec_curlY ) {
+            imgCurlX( this->imgDiffX, 3, 3, MLARR::Analyzer::coefficients.vec_nablaY ),
+            imgCurlY( this->imgDiffY, 3, 3, MLARR::Analyzer::coefficients.vec_nablaX ) {
             };
-			~NormalPhaseSingularityAnalyzer(void){};
+			~BrayPhaseSingularityAnalyzer(void){};
 		public:
 			void execute(void){
                 
@@ -338,17 +340,41 @@ namespace MLARR{
                 this->imgDiffY.execute();
 				for( int h = 0; h <this->height; h++){
 					for( int w = 0; w <this->width; w++){
-						if( *(this->im_roi.at(w, h)) ){
-                            this->imgDiffX.setValue(w, h, phaseComplement(*this->imgDiffX.at(w, h)));
-                            this->imgDiffY.setValue(w, h, phaseComplement(*this->imgDiffY.at(w, h)));
-                        }
+                        this->imgDiffX.setValue(w, h, phaseComplement(*this->imgDiffX.at(w, h)));
+                        this->imgDiffY.setValue(w, h, phaseComplement(*this->imgDiffY.at(w, h)));
                     }
                 }
                 this->imgCurlX.execute();
                 this->imgCurlY.execute();
 				for( int h = 0; h <this->height; h++){
 					for( int w = 0; w <this->width; w++){
-                        this->setValue( w, h, *(this->imgCurlX.at(w, h)) + *(this->imgCurlY.at(w, h) ));
+                        if( *(this->im_roi.at(w, h)) ){
+                            double value = double(*(this->imgCurlX.at(w, h)) + *(this->imgCurlY.at(w, h)));
+                            value = abs(value);
+                            this->setValue( w, h, value > this->thre * 2 * M_PI ? 1 : 0);
+                            /*
+                            if( value > this->thre * 2 * M_PI ){
+                                std::ofstream ofs("/Users/tomii/debug.log");
+                                if(!ofs) return;
+                                
+                                ofs << *(this->imgCurlX.at(w, h)) << endl;
+                                ofs << *(this->imgCurlY.at(w, h)) << endl;
+                                ofs << "----" << std::endl;
+                                for( int y = -1; y <= 2; y++){
+                                    for( int x = -1; x <= 2; x++){
+                                        ofs << *(this->srcImg.at(w+x, h+y)) << std::endl;
+                                    }
+                                }
+                                ofs << "----" << std::endl;
+                                for( int y = -1; y <= 1; y++){
+                                    for( int x = -1; x <= 1; x++){
+                                        ofs << *(this->imgDiffX.at(w+x, h+y)) << ",";
+                                        ofs << *(this->imgDiffY.at(w+x, h+y)) << endl;
+                                    }
+                                }
+                                ofs.close();
+                            }*/
+                        }
                     }
                 }
                 return;

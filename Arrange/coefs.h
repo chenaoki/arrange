@@ -26,15 +26,15 @@ namespace MLARR{
 			static const double GAUSSIAN_5x5[25];
 			static const int SPFIR_DIM = 6;
 			static const double SPFIR_COEFS[SPFIR_DIM];
-            static const double CURL_X_COEFS[9];
-            static const double CURL_Y_COEFS[9];
+            static const double NABLA_X_COEFS[9];
+            static const double NABLA_Y_COEFS[9];
             static const unsigned char RGB_HSV[256][3];
             
 			std::vector<double> vec_gaussian_3x3;
 			std::vector<double> vec_gaussian_5x5;
 			std::vector<double> vec_spFIR;
-            std::vector<double> vec_curlX;
-            std::vector<double> vec_curlY;
+            std::vector<double> vec_nablaX;
+            std::vector<double> vec_nablaY;
 		public:
 			Coeffs(void) : vec_gaussian_5x5(){
 				for(int i = 0; i < 25; i++){
@@ -47,8 +47,8 @@ namespace MLARR{
                     vec_gaussian_3x3.push_back(GAUSSIAN_3x3[i]);
                 }
                 for( int i = 0; i < 9; i++ ){
-                    vec_curlX.push_back(CURL_X_COEFS[i]);
-                    vec_curlY.push_back(CURL_Y_COEFS[i]);
+                    vec_nablaX.push_back(NABLA_X_COEFS[i]);
+                    vec_nablaY.push_back(NABLA_Y_COEFS[i]);
                 }
 			}
 		};
