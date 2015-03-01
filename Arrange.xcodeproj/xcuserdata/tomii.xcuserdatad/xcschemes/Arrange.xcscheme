@@ -63,7 +63,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "-p /usr/local/tmp/ArrangeParam/temp.json"
+            argument = "-p /Users/tomii/tmp/sampleParam.json"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

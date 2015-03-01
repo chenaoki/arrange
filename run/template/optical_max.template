@@ -16,7 +16,7 @@
 
 	"opticalOffline" : {
 
-		"menu" : [ "revnorm","hilbert", "psdetect" ],
+		"menu" : [ "psdetect" ],
 
 		"revnorm" : {
 			"minDelta" : 20
@@ -30,17 +30,18 @@
 		},
 
 		"psdetect" : {
+			"detectionAlgo" : "div",
 			"closeRoi" : 2,
 			"medianFilterSize" : 9,
 			"adjacentSize" : 5,
 			"winSize" :  9,
-			"divThre" : 0.8,
+			"thre" : 0.8,
 			"isochrone" : {
 				"max" : 80,
 				"interval" : 5
 			},
 			"roiMargin" : {
-				"top"    : 0.10,
+				"top"    : 0.25,
 				"bottom" : 0.05,
 				"left"   : 0.05,
 				"right"  : 0.05

@@ -46,7 +46,7 @@ BST_INC_DIR = $(BST_DIR)/include
 BST_SALIB = -BStatic $(BST_DIR)/lib/libboost_program_options.a
 
 # OpenCV Setting
-CV_LIB = -lopencv_core -lopencv_highgui -lopencv_imgproc -lavdevice
+CV_LIB = -lopencv_core -lopencv_highgui -lopencv_imgproc -lavdevice -lopencv_legacy -lopencv_ocl -lopencv_video
 
 ## few locations
 OBJ_DIR	  = ./obj/$(CPU)
