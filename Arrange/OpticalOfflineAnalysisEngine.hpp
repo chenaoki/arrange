@@ -35,6 +35,8 @@ namespace MLARR{
 		const std::string fmt_raw_min("%s/raw/min/min_%05d.raw");
 		const std::string fmt_raw_opt("%s/raw/opt/opt_%05d.raw");
 		const std::string fmt_raw_hbt("%s/raw/hbt/hbt_%05d.raw");
+        const std::string fmt_raw_hbf("%s/raw/hbf/hbf_%05d.raw");
+        const std::string fmt_raw_psp("%s/raw/psp/psp_%05d.raw");
         const std::string fmt_jpg_roi("%s/jpg/roi/opt_%05d.jpg");
         const std::string fmt_jpg_roh("%s/jpg/roi/hvt_%05d.jpg");
         const std::string fmt_jpg_rop("%s/jpg/roi/psp_%05d.jpg");
@@ -94,6 +96,10 @@ namespace MLARR{
                 temp = this->dstDir + "/raw/opt";
                 mkdir( temp.c_str() , 0777);
                 temp = this->dstDir + "/raw/hbt";
+                mkdir( temp.c_str() , 0777);
+                temp = this->dstDir + "/raw/hbf";
+                mkdir( temp.c_str() , 0777);
+                temp = this->dstDir + "/raw/psp";
                 mkdir( temp.c_str() , 0777);
                 temp = this->dstDir + "/jpg";
                 mkdir( temp.c_str() , 0777);
@@ -198,18 +204,18 @@ namespace MLARR{
                 disp_roi.show();
                 disp_max.show();
                 disp_min.show();
-                disp_roi.save( this->dstDir, fmt_jpg_roi, this->cam->f_tmp);
-                disp_max.save( this->dstDir, fmt_jpg_max, this->cam->f_tmp);
-                disp_min.save( this->dstDir, fmt_jpg_min, this->cam->f_tmp);
-                dump_roi.dump(this->cam->f_tmp);
+                disp_roi.save( this->dstDir, fmt_jpg_roi);
+                disp_max.save( this->dstDir, fmt_jpg_max);
+                disp_min.save( this->dstDir, fmt_jpg_min);
+                dump_roi.dump();
                 
                 this->cam->initialize();
                 while( stop != this->cam->state ){
                     this->cam->capture();
                     optEng.execute();
                     disp_opt.show( this->cam->getTime(), white );
-                    disp_opt.save( this->dstDir, fmt_jpg_opt, this->cam->f_tmp);
-                    dump_opt.dump( this->cam->f_tmp );
+                    disp_opt.save( this->dstDir, fmt_jpg_opt);
+                    dump_opt.dump();
                 }
                 this->cam->initialize();
                 
@@ -283,8 +289,8 @@ namespace MLARR{
                 Dumper<unsigned char> dump_roh( imgRoiMasked, this->dstDir, fmt_raw_roh);
                 disp_roi.show();
                 disp_roh.show();
-                disp_roh.save( this->dstDir, fmt_jpg_roh, this->cam->f_tmp);
-                dump_roh.dump( camRoi.f_tmp );
+                disp_roh.save( this->dstDir, fmt_jpg_roh );
+                dump_roh.dump();
                 
                 /* Main loop */
                 camOpt.initialize();
@@ -304,8 +310,8 @@ namespace MLARR{
                     disp_opt.show( camOpt.getTime(), white );
                     disp_hilbert.show( camOpt.getTime(), red );
                     
-                    disp_hilbert.save( this->dstDir, fmt_jpg_hbt, camOpt.f_tmp);
-                    dump_hilbert.dump( camOpt.f_tmp);
+                    disp_hilbert.save( this->dstDir, fmt_jpg_hbt );
+                    dump_hilbert.dump();
                 }
                 camOpt.initialize();
                 
@@ -353,7 +359,6 @@ namespace MLARR{
                 if( NULL == imgPSP ){
                     throw std::string("Unrecognized PSP detection algorithm") + psp_detectionAlgo;
                 }
-                //DivPhaseSingularityAnalyzer<double>  imgDivPSP( imgFil, psp_winSize, psp_divThre );
                 LabelImage                           imgLabel(dynamic_cast<Image<unsigned char>&>(*imgPSP));
                 
                 /* ROI setting */
@@ -376,12 +381,14 @@ namespace MLARR{
                 imgPSP->setRoi ( imgRoiClose );
                 Display<unsigned char> disp_rop("roi(psp detection)", imgRoiClose, 1, 0, colMap_gray );
                 disp_rop.show();
-                disp_rop.save(this->dstDir, fmt_jpg_rop, 0);
+                disp_rop.save(this->dstDir, fmt_jpg_rop);
                 
                 /* Display */
                 Display<double>         disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
                 Display<double>         dispFil("Filtered Phase Map", imgFil, M_PI, -M_PI, colMap_hsv);
                 Display<unsigned char>  dispPSP("Phase singularity", *imgPSP, 1, 0, colMap_gray);
+                Dumper<double>          dump_hbf( imgFil, this->dstDir, fmt_raw_hbf );
+                Dumper<unsigned char>   dump_psp( *imgPSP, this->dstDir, fmt_raw_psp );
 
                 /* Log file */
                 sprintf( buf, fmt_log_psp.c_str(), this->dstDir.c_str() );
@@ -413,8 +420,10 @@ namespace MLARR{
                     dispPSP.show( camPhase.getTime(), red );
                     
                     /* save images */
-                    dispPSP.save(this->dstDir, fmt_jpg_psp, camPhase.getTime());
-                    dispFil.save(this->dstDir, fmt_jpg_hbf, camPhase.getTime());
+                    dispPSP.save(this->dstDir, fmt_jpg_psp);
+                    dispFil.save(this->dstDir, fmt_jpg_hbf);
+                    dump_hbf.dumpText();
+                    dump_psp.dumpText();
                     
                     //cvWaitKey(-1);
                 }
@@ -522,9 +531,9 @@ namespace MLARR{
                     dispIso.show();
                     
                     /* save images */
-                    disp_opt.save(this->dstDir, fmt_jpg_psp, camPhase.getTime());
-                    dispFil.save(this->dstDir, fmt_jpg_hbf, camPhase.getTime());
-                    dispIso.save(this->dstDir, fmt_jpg_iso, camPhase.getTime());
+                    disp_opt.save(this->dstDir, fmt_jpg_psp);
+                    dispFil.save(this->dstDir, fmt_jpg_hbf);
+                    dispIso.save(this->dstDir, fmt_jpg_iso);
                     
                     //cvWaitKey(-1);
                 }

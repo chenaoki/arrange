@@ -217,7 +217,7 @@ namespace MLARR{
                         }
                         if( e_mode_monitor == nMode ) continue;
                         if( e_mode_dump == nMode ){
-                            dump_cam.dump( this->cam->f_tmp );
+                            dump_cam.dump();
                         }
                         if( e_mode_capture == nMode ) continue;
 
@@ -232,7 +232,7 @@ namespace MLARR{
                             imgOpt.updateRange();
                             flgRange = true;
                             disp_roi.show();
-                            disp_roi.save(this->dstDir, "%s/roi.jpg", this->cam->f_tmp );
+                            disp_roi.save(this->dstDir, "%s/roi.jpg" );
                             
                             /* ROI setting for pyramid */
                             imgRoiOpen.execute();
@@ -287,14 +287,14 @@ namespace MLARR{
                         if( e_mode_dump == nMode ){
                             disp_opt.drawRect( (int)predMat->data.fl[0], (int)predMat->data.fl[1], 2, MLARR::IO::green );
                             disp_opt.show( cam->getTime(), white);
-                            disp_opt.save( this->dstDir, this->fmt_jpg_det, cam->getTime());
+                            disp_opt.save( this->dstDir, this->fmt_jpg_det );
                             for( int i = 0; i < vec_disp_sp.size(); i++){
                                 sprintf( buf, "%%s/jpg/pyr/%02d/%%06d.jpg", i);
                                 vec_disp_sp[i]->show(cam->getTime(), white);
-                                vec_disp_sp[i]->save(this->dstDir, buf, this->cam->f_tmp);
+                                vec_disp_sp[i]->save(this->dstDir, buf );
                             }
                             disp_pyr.show(cam->getTime(), white);
-                            disp_pyr.save(this->dstDir, this->fmt_jpg_psp, this->cam->f_tmp );
+                            disp_pyr.save(this->dstDir, this->fmt_jpg_psp);
                             cvWaitKey(5);
                         }
                         gettimeofday(&t, NULL);

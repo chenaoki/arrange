@@ -352,28 +352,6 @@ namespace MLARR{
                             double value = double(*(this->imgCurlX.at(w, h)) + *(this->imgCurlY.at(w, h)));
                             value = abs(value);
                             this->setValue( w, h, value > this->thre * 2 * M_PI ? 1 : 0);
-                            /*
-                            if( value > this->thre * 2 * M_PI ){
-                                std::ofstream ofs("/Users/tomii/debug.log");
-                                if(!ofs) return;
-                                
-                                ofs << *(this->imgCurlX.at(w, h)) << endl;
-                                ofs << *(this->imgCurlY.at(w, h)) << endl;
-                                ofs << "----" << std::endl;
-                                for( int y = -1; y <= 2; y++){
-                                    for( int x = -1; x <= 2; x++){
-                                        ofs << *(this->srcImg.at(w+x, h+y)) << std::endl;
-                                    }
-                                }
-                                ofs << "----" << std::endl;
-                                for( int y = -1; y <= 1; y++){
-                                    for( int x = -1; x <= 1; x++){
-                                        ofs << *(this->imgDiffX.at(w+x, h+y)) << ",";
-                                        ofs << *(this->imgDiffY.at(w+x, h+y)) << endl;
-                                    }
-                                }
-                                ofs.close();
-                            }*/
                         }
                     }
                 }

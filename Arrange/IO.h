@@ -271,20 +271,21 @@ namespace MLARR{
 		template<class T> class Dumper
 		{
 		private:
+            int numSaveCount;
 			const Image<T>& srcImage;
 			const std::string saveDir;
 			const std::string format;
 		public:
 			Dumper( const Image<T>& _srcImage, const std::string _saveDir, const std::string& _format)
-				: srcImage(_srcImage), saveDir(_saveDir), format(_format){
+				: srcImage(_srcImage), saveDir(_saveDir), format(_format), numSaveCount(0){
 			};
 			Dumper( const std::vector<T>& _srcVector, const std::string _saveDir, const std::string& _format)
-				: srcImage(_srcVector), saveDir(_saveDir), format(_format){
+				: srcImage(_srcVector), saveDir(_saveDir), format(_format), numSaveCount(0){
 			};
 			~Dumper(void){};
-			void dump(const int fnum){
+			void dump(){
 				char path[255];
-				sprintf( path, format.c_str(), saveDir.c_str(), fnum);
+				sprintf( path, format.c_str(), saveDir.c_str(), ++numSaveCount);
 				std::ofstream fout(path, std::ios::out | std::ios::binary | std::ios::trunc );
 				if( fout ){
 					for(int h = 0; h < srcImage.height; h++){
@@ -295,15 +296,17 @@ namespace MLARR{
 				}
 				fout.close();
 			};
-            void dumpText(const int fnum){
+            void dumpText(){
 				char path[255];
                 std::string fmt = format + ".txt";
-				sprintf( path, fmt.c_str(), saveDir.c_str(), fnum);
+				sprintf( path, fmt.c_str(), saveDir.c_str(), ++numSaveCount);
 				std::ofstream fout(path, std::ios::out | std::ios::trunc );
 				if( fout ){
 					for(int h = 0; h < srcImage.height; h++){
 						for( int w=0; w < srcImage.width; w++){
-							fout << *this->srcImage.at(w,h) << ",";
+                            T value = *this->srcImage.at(w,h);
+                            sprintf(path, "%.2f,", static_cast<double>(value));
+							fout << path;
 						}
                         fout << std::endl;
 					}
@@ -327,6 +330,7 @@ namespace MLARR{
 			const double strFontSize;
 			const cv::Point strDrawPoint;
             int flg_update;
+            int numSaveCount;
 		protected:
 			void updateCVImage(void){
 				cv::Mat imgTemp(srcImg.height, srcImg.width, CV_8UC3);
@@ -347,11 +351,11 @@ namespace MLARR{
 			};
 		public:
 			explicit Display<T>( const std::string _winName, Image<T>& _srcImage, const T& _maxVal, const T& _minVal, const ColorMap& _colMap ) 
-				: winName(_winName), srcImg(_srcImage), maxVal(_maxVal), minVal(_minVal) ,colMap(_colMap), cv_img(_srcImage.height, _srcImage.width, CV_8UC3), strFontSize(0.4), strFontStyle(cv::FONT_HERSHEY_SIMPLEX), strDrawPoint(1,15), flg_update(0){
+				: winName(_winName), srcImg(_srcImage), maxVal(_maxVal), minVal(_minVal) ,colMap(_colMap), cv_img(_srcImage.height, _srcImage.width, CV_8UC3), strFontSize(0.4), strFontStyle(cv::FONT_HERSHEY_SIMPLEX), strDrawPoint(1,15), flg_update(0), numSaveCount(0){
 					cv::namedWindow(winName);
 			};
 			Display<T>( const std::string _winName, Image<T>& _srcImage, const T& _maxVal, const T& _minVal, const ColorMap& _colMap, const int dispWidth, const int dispHeight )
-				: winName(_winName), srcImg(_srcImage), maxVal(_maxVal), minVal(_minVal) ,colMap(_colMap), cv_img(dispHeight, dispWidth, CV_8UC3), strFontSize(0.4), strFontStyle(cv::FONT_HERSHEY_SIMPLEX), strDrawPoint(1,15), flg_update(0){
+				: winName(_winName), srcImg(_srcImage), maxVal(_maxVal), minVal(_minVal) ,colMap(_colMap), cv_img(dispHeight, dispWidth, CV_8UC3), strFontSize(0.4), strFontStyle(cv::FONT_HERSHEY_SIMPLEX), strDrawPoint(1,15), flg_update(0), numSaveCount(0){
 					cv::namedWindow(winName);
 			}
 			virtual ~Display(void){
@@ -411,9 +415,9 @@ namespace MLARR{
 				cv::waitKey(10);
                 flg_update = 0;
 			};
-			void save( const std::string& saveDir, const std::string& format, const int frameNum ){
+			void save( const std::string& saveDir, const std::string& format ){
 				char path[255];
-				sprintf( path, format.c_str(), saveDir.c_str(), frameNum);
+				sprintf( path, format.c_str(), saveDir.c_str(), ++numSaveCount);
 				cv::imwrite( path, cv_img);
 			};
 		};
