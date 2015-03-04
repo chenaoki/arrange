@@ -257,11 +257,12 @@ namespace MLARR{
                             
                         }
                         
+                        /* Time count start */
+                        gettimeofday(&s, NULL);
+                        cnt++;
+                        
                         /* Pre-operation */
                         imgOpt.execute();
-
-                        /* Time count start */
-                        if( cnt++ == 0 ) gettimeofday(&s, NULL);
                         
                         /* PSP Detection */
                         imgFil.execute();
