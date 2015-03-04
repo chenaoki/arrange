@@ -45,8 +45,8 @@ namespace MLARR{
 		const std::string fmt_jpg_opt("%s/jpg/opt/opt_%05d.jpg");
 		const std::string fmt_jpg_hbt("%s/jpg/hbt/hbt_%05d.jpg");
 		const std::string fmt_jpg_hbf("%s/jpg/hbf/hbf_%05d.jpg");
-		const std::string fmt_jpg_psh("%s/jpg/psh/psh_%05d.jpg");
 		const std::string fmt_jpg_psp("%s/jpg/psp/psp_%05d.jpg");
+        const std::string fmt_jpg_psd("%s/jpg/psd/psd_%05d.jpg");
 		const std::string fmt_jpg_ecg("%s/jpg/ecg/ecg_%05d.jpg");
 		const std::string fmt_jpg_iso("%s/jpg/iso/iso_%05d.jpg");
 		const std::string fmt_log_phs("%s/log/phs.csv");
@@ -115,9 +115,9 @@ namespace MLARR{
                 mkdir( temp.c_str() , 0777);
                 temp = this->dstDir + "/jpg/hbf";
                 mkdir( temp.c_str() , 0777);
-                temp = this->dstDir + "/jpg/psh";
-                mkdir( temp.c_str() , 0777);
                 temp = this->dstDir + "/jpg/psp";
+                mkdir( temp.c_str() , 0777);
+                temp = this->dstDir + "/jpg/psd";
                 mkdir( temp.c_str() , 0777);
                 temp = this->dstDir + "/jpg/ecg";
                 mkdir( temp.c_str() , 0777);
@@ -351,10 +351,13 @@ namespace MLARR{
                 MorphImage<unsigned char>            imgRoiClose( camRoi, -1 * psp_closeRoi);
                 PhaseMedianFilter<double>            imgFil( camPhase, psp_medianSize );
                 ImageAnalyzer<double, unsigned char> *imgPSP = NULL;
+                Image<double>                        *imgPSD = NULL;
                 if( psp_detectionAlgo == "bray" ){
                     imgPSP = new BrayPhaseSingularityAnalyzer<double>(imgFil, psp_divThre );
+                    imgPSD = &((dynamic_cast< BrayPhaseSingularityAnalyzer<double>* >(imgPSP))->imgPSD);
                 }else if( psp_detectionAlgo == "div" ){
                     imgPSP = new DivPhaseSingularityAnalyzer<double>( imgFil, psp_winSize, psp_divThre );;
+                    imgPSD = &((dynamic_cast< DivPhaseSingularityAnalyzer<double>* >(imgPSP))->imgDiv);
                 }
                 if( NULL == imgPSP ){
                     throw std::string("Unrecognized PSP detection algorithm") + psp_detectionAlgo;
@@ -387,6 +390,7 @@ namespace MLARR{
                 Display<double>         disp_opt("optical", camOpt, 1.0, 0.0, colMap_orange);
                 Display<double>         dispFil("Filtered Phase Map", imgFil, M_PI, -M_PI, colMap_hsv);
                 Display<unsigned char>  dispPSP("Phase singularity", *imgPSP, 1, 0, colMap_gray);
+                Display<double>         dispPSD("Degree of PSP", *imgPSD, 1.0, 0, colMap_gray );
                 Dumper<double>          dump_hbf( imgFil, this->dstDir, fmt_raw_hbf );
                 Dumper<unsigned char>   dump_psp( *imgPSP, this->dstDir, fmt_raw_psp );
 
@@ -415,13 +419,15 @@ namespace MLARR{
                     ofs << std::endl;
                     
                     /* show images.*/
-                    disp_opt.show( camPhase.getTime(), red);
-                    dispFil.show( camPhase.getTime(), red);
-                    dispPSP.show( camPhase.getTime(), red );
+                    disp_opt.show( camPhase.getTime(), white );
+                    dispFil.show( camPhase.getTime(), black );
+                    dispPSP.show( camPhase.getTime(), white );
+                    dispPSD.show( camPhase.getTime(), white );
                     
                     /* save images */
-                    dispPSP.save(this->dstDir, fmt_jpg_psp);
                     dispFil.save(this->dstDir, fmt_jpg_hbf);
+                    dispPSP.save(this->dstDir, fmt_jpg_psp);
+                    dispPSD.save(this->dstDir, fmt_jpg_psd);
                     dump_hbf.dumpText();
                     dump_psp.dumpText();
                     

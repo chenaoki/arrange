@@ -17,7 +17,7 @@
 	"feedback" : {
 		"procImageSize" : 128,
 		"minDelta" : 5,
-		"mode" : 1,
+		"mode" : 0,
 		"frameRange" : 300,
 		"pyramidDown" : 3,
 		"closeRoi" : 10,

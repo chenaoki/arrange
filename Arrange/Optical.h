@@ -324,13 +324,15 @@ namespace MLARR{
             ImageDiffY<T> imgDiffY;
             SpacialFilter<T> imgCurlX;
             SpacialFilter<T> imgCurlY;
+            Image<double> imgPSD;
 		public:
 			explicit BrayPhaseSingularityAnalyzer( MLARR::Basic::Image<double>& _src, double _thre )
 			:ImageAnalyzer<T,unsigned char>( _src.height, _src.width, 0, _src),
             thre( _thre ),
             imgDiffX( this->srcImg ), imgDiffY( this->srcImg ),
             imgCurlX( this->imgDiffX, 3, 3, MLARR::Analyzer::coefficients.vec_nablaY ),
-            imgCurlY( this->imgDiffY, 3, 3, MLARR::Analyzer::coefficients.vec_nablaX ) {
+            imgCurlY( this->imgDiffY, 3, 3, MLARR::Analyzer::coefficients.vec_nablaX ),
+            imgPSD( this->height, this->width, 0.0 ){
             };
 			~BrayPhaseSingularityAnalyzer(void){};
 		public:
@@ -351,6 +353,7 @@ namespace MLARR{
                         if( *(this->im_roi.at(w, h)) ){
                             double value = double(*(this->imgCurlX.at(w, h)) + *(this->imgCurlY.at(w, h)));
                             value = abs(value);
+                            imgPSD.setValue( w, h, value / (2 * M_PI) );
                             this->setValue( w, h, value > this->thre * 2 * M_PI ? 1 : 0);
                         }
                     }
