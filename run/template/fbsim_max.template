@@ -19,7 +19,7 @@
 		"minDelta" : 5,
 		"mode" : 0,
 		"frameRange" : 300,
-		"pyramidDown" : 1,
+		"pyramidDown" : 3,
 		"closeRoi" : 10,
 		"winSize" : 20,
 		"kalman":{

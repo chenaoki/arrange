@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     # Connection to MySQL Server
     con = mysql.connector.connect(
-        host='169.254.100.100',
+        host='192.168.36.15',
         db='BMPE_ARR',
         user='tomii',
         passwd='feedback',

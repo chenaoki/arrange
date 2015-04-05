@@ -30,7 +30,7 @@
 		},
 
 		"psdetect" : {
-			"detectionAlgo" : "div",
+			"detectionAlgo" : "bray",
 			"closeRoi" : 2,
 			"medianFilterSize" : 9,
 			"adjacentSize" : 5,

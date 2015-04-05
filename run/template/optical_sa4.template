@@ -5,12 +5,12 @@
 	"rawCamera" : {
 		"srcDir" : "SOURCE_DIR/SAMPLE_NAME/SESSION_NAME",
 		"format" : "%s/FILE_PREFIX%06d.raww",
-		"size" : 512,
+		"size" : IMG_SIZE,
 		"frameRate" : 1000,
 		"frame" : {
 			"start":1,
 			"skip":1,
-			"stop":2000
+			"stop":500
 		}
 	},
 
@@ -19,14 +19,14 @@
 		"menu" : [ "revnorm", "hilbert", "psdetect" ],
 
 		"revnorm" : {
-			"minDelta" : 80
+			"minDelta" : 40
 		},
 
 		"hilbert" : {
 			"size" : 128,
 			"minPeakDistance" : 5,
 			"filterSize" : 40,
-			"elecMaskPath" : "./maskImage/SAMPLE_NAME.bmp"
+			"elecMaskPath" : "./maskImage/MASK_IMG_NAME.bmp"
 		},
 
 		"psdetect" : {
@@ -35,16 +35,16 @@
 			"medianFilterSize" : 9,
 			"adjacentSize" : 5,
 			"winSize" :  9,
-			"thre" : 0.8,
+			"thre" : 0.5,
 			"isochrone" : {
 				"max" : 80,
 				"interval" : 5
 			},
 			"roiMargin" : {
-				"top"    : 0.40,
-				"bottom" : 0.20,
-				"left"   : 0.05,
-				"right"  : 0.05
+				"top"    : 0.25,
+				"bottom" : 0.25,
+				"left"   : 0.25,
+				"right"  : 0.25
 			}
 		}
 

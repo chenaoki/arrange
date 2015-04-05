@@ -198,7 +198,6 @@ namespace MLARR{
                     this->cam->capture();
                     maxEng.execute();
                     minEng.execute();
-                    disp_cam.show( this->cam->getTime(), white );
                 }
                 optEng.updateRange();
                 disp_roi.show();
