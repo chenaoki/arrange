@@ -613,32 +613,34 @@ namespace MLARR{
                 int label = 1;
 				for( int h = 1; h < this->height - 1; h++){
 					for( int w = 1; w < this->width - 1; w++){
-                        if( *(this->srcImg.at(w, h))){
-                            int sum = 0;
-                            int tempLabel = -1;
+                        if( *(this->srcImg.at(w, h)) > 0 ){
+                            int tempLabel;
                             unsigned char v1 = *(this->at(w-1, h));
                             unsigned char v2 = *(this->at(w+1, h-1));
                             unsigned char v3 = *(this->at(w,   h-1));
                             unsigned char v4 = *(this->at(w-1, h-1));
-                            sum = v1 + v2 + v3 + v4;
-                            if( sum == 0 ){
-                                tempLabel = ++label;
+                            if( v1 == 0 && v2 == 0 && v3 == 0 && v4 == 0 ){
+                                tempLabel = label++;
                                 map_LUT[tempLabel] = tempLabel;
                             }else{
                                 int min = INT_MAX;
-                                if( v1 ) min = v1 < min ? v1 : min;
-                                if( v2 ) min = v2 < min ? v2 : min;
-                                if( v3 ) min = v3 < min ? v3 : min;
-                                if( v4 ) min = v4 < min ? v4 : min;
+                                if( v1 > 0 ) min = v1 < min ? v1 : min;
+                                if( v2 > 0 ) min = v2 < min ? v2 : min;
+                                if( v3 > 0 ) min = v3 < min ? v3 : min;
+                                if( v4 > 0 ) min = v4 < min ? v4 : min;
                                 tempLabel = min;
-                                if( v1 && min != v1 ) map_LUT[v1] = min;
-                                if( v2 && min != v2 ) map_LUT[v2] = min;
-                                if( v3 && min != v3 ) map_LUT[v3] = min;
-                                if( v4 && min != v4 ) map_LUT[v4] = min;
+                                if( v1 > 0 && min != v1 ) map_LUT[v1] = min;
+                                if( v2 > 0 && min != v2 ) map_LUT[v2] = min;
+                                if( v3 > 0 && min != v3 ) map_LUT[v3] = min;
+                                if( v4 > 0 && min != v4 ) map_LUT[v4] = min;
                             }
                             this->setValue(w, h, tempLabel);
                         }
                     }
+                }
+                
+                for( std::map<int,int>::iterator it = map_LUT.begin(); it != map_LUT.end(); it++){
+                    it->second = map_LUT[it->second];
                 }
                 
                 for( int h = 0; h < this->height; h++){
