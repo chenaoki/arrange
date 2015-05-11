@@ -177,6 +177,7 @@
 		669B775D1A052E8600862779 /* libopencv_highgui.2.4.9.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_highgui.2.4.9.dylib; path = ../../../Cellar/opencv/2.4.9/lib/libopencv_highgui.2.4.9.dylib; sourceTree = "<group>"; };
 		669B775E1A052E8600862779 /* libopencv_imgproc.2.4.9.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_imgproc.2.4.9.dylib; path = ../../../Cellar/opencv/2.4.9/lib/libopencv_imgproc.2.4.9.dylib; sourceTree = "<group>"; };
 		669CF12819931DEF00A60095 /* AVTCamera.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AVTCamera.h; sourceTree = "<group>"; };
+		669D30F61B004DC800392484 /* ColorbarEngine.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ColorbarEngine.hpp; sourceTree = "<group>"; };
 		66C429EF19B071A60066D2E1 /* CameraFactory.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = CameraFactory.hpp; sourceTree = "<group>"; };
 		66D5C9A619931EB200171BA3 /* AVTCamera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AVTCamera.cpp; sourceTree = "<group>"; };
 		66D5C9A8199321E700171BA3 /* ImageLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageLib.h; sourceTree = "<group>"; };
@@ -398,6 +399,7 @@
 				66333F2C19B7E9BD007B0A17 /* OpticalOfflineAnalysisEngine.hpp */,
 				660E55321997A71B00EFD371 /* FeedbackEngine.hpp */,
 				66333F2B19B7E976007B0A17 /* MultiStimSetupEngine.hpp */,
+				669D30F61B004DC800392484 /* ColorbarEngine.hpp */,
 			);
 			name = Engine;
 			sourceTree = "<group>";

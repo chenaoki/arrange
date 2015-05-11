@@ -7,6 +7,7 @@
 #include "OpticalOfflineAnalysisEngine.hpp"
 #include "FeedbackEngine.hpp"
 #include "MultiStimSetupEngine.hpp"
+#include "ColorbarEngine.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -48,6 +49,8 @@ int main(int argc, char* argv[])
             eng = dynamic_cast<Engine*>(new FeedbackEngine<unsigned short>(paramFile));
         }else if( engine == string("mssetup")){
             eng = dynamic_cast<Engine*>(new MultiStimSetupEngine(paramFile));
+        }else if( engine == string("colorbar")){
+            eng = dynamic_cast<Engine*>(new ColorbarEngine(paramFile));
         }else{
 			throw engine + string(" engine is not implemented yet.");
 		}
