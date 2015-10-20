@@ -22,6 +22,6 @@ if __name__ == '__main__':
 		print cmd
 		os.system(cmd)
 
-    cmd = 'ffmpeg -r %s -i %s/%s%%05d.jpg %s.mp4' % (  sys.argv[3], d, sys.argv[2], d)
+    cmd = 'ffmpeg -y -r %s -i %s/%s%%05d.jpg %s.mp4' % (  sys.argv[3], d, sys.argv[2], d)
     print cmd
     os.system(cmd)
