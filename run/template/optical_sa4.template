@@ -10,13 +10,13 @@
 		"frame" : {
 			"start":1,
 			"skip":1,
-			"stop":500
+			"stop":2000
 		}
 	},
 
 	"opticalOffline" : {
 
-		"menu" : [ "revnorm", "hilbert", "psdetect" ],
+		"menu" : [ "hilbert", "psdetect" ],
 
 		"revnorm" : {
 			"minDelta" : 40
@@ -35,16 +35,16 @@
 			"medianFilterSize" : 9,
 			"adjacentSize" : 5,
 			"winSize" :  9,
-			"thre" : 0.5,
+			"thre" : 0.8,
 			"isochrone" : {
 				"max" : 80,
 				"interval" : 5
 			},
 			"roiMargin" : {
-				"top"    : 0.25,
-				"bottom" : 0.25,
-				"left"   : 0.25,
-				"right"  : 0.25
+				"top"    : 0,
+				"bottom" : 0,
+				"left"   : 0,
+				"right"  : 0
 			}
 		}
 

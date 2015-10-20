@@ -6,3 +6,4 @@ Arrange/Arrange
 Arrange/obj/*
 BAT/*
 run/*.json
+run/work*

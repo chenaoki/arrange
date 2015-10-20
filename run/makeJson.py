@@ -43,7 +43,8 @@ if __name__ == '__main__':
         if camera_info["name"] == "max":
             filePrefix =ses["name"].lower()
         if camera_info["name"] == "sa4":
-            filePrefix = ses["name"]
+            #filePrefix = ses["name"]
+            filePrefix = 'raw/cam/'
         if camera_info["name"] == "dalsa":
             filePrefix = "f_"
         filePrefix = filePrefix.replace('@', '')
@@ -59,10 +60,10 @@ if __name__ == '__main__':
         fileStr = fileStr.replace('SESSION_NAME', ses["name"])
         fileStr = fileStr.replace('FILE_PREFIX', filePrefix)
         fileStr = fileStr.replace('IMG_SIZE', str(ses["img_size"]))
-        if sample_info["mask"] > 0:
-            fileStr = fileStr.replace('MASK_IMG_NAME', sample_info["name"])
-        else:
-            fileStr = fileStr.replace('MASK_IMG_NAME', "white")
+        #if sample_info["mask"] > 0:
+        fileStr = fileStr.replace('MASK_IMG_NAME', sample_info["name"])
+        #else:
+            #fileStr = fileStr.replace('MASK_IMG_NAME', "white")
 
         with open('%s_%s_%s_%s.json' % (engine, camera_info["name"],  sample_info["name"], ses["name"] ) , 'w') as outf:
             outf.write(fileStr)
