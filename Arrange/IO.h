@@ -70,7 +70,8 @@ namespace MLARR{
 			RawFileCamera( int imgWidth, int imgHeight, size_t _bits, double _fps, const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop ) 
 				: ICamera<T>( imgWidth, imgHeight, _bits, _fps), dirPath(_dirPath), format(_format), f_start(_f_start), f_skip(_f_skip), f_stop(_f_stop){
                     
-					this->f_tmp = f_start;
+					this->f_tmp = 0;
+					this->f_next = f_start;
 			};
 			virtual ~RawFileCamera(void){};
 			void capture(void){
@@ -125,18 +126,18 @@ namespace MLARR{
 			};
 		};
         
-        class HurricaneRawFileCamera : public RawFileCamera<unsigned short>{
-        public:
-            HurricaneRawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size = 512, int _fps = 1000 )
-            : RawFileCamera<unsigned short>( _size, _size, 8, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop ){
-            };
-            ~HurricaneRawFileCamera(void){};
-        protected:
-            void binaryTrans( const unsigned short& src, unsigned short& dst){
-                /* do nothing */
-                dst = src;
-            };
+    class HurricaneRawFileCamera : public RawFileCamera<unsigned short>{
+    public:
+        HurricaneRawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size = 512, int _fps = 1000 )
+        : RawFileCamera<unsigned short>( _size, _size, 8, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop ){
         };
+        ~HurricaneRawFileCamera(void){};
+    protected:
+        void binaryTrans( const unsigned short& src, unsigned short& dst){
+            /* do nothing */
+            dst = src;
+        };
+    };
 
 		class MaxRawFileCamera : public RawFileCamera<unsigned short>{
 		public:
@@ -151,30 +152,77 @@ namespace MLARR{
 			};
 		};
         
-        class SA4RawFileCamera : public RawFileCamera<unsigned short>{
-        public:
-            SA4RawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size = 512, int _fps = 1000 )
-            : RawFileCamera<unsigned short>( _size, _size, 12, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop )
-            {};
-            ~SA4RawFileCamera(void){};
-        protected:
+		class Max8RawFileCamera : public RawFileCamera<unsigned short>{
+		public:
+			Max8RawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size = 512, int _fps = 1000 ) 
+				: RawFileCamera<unsigned short>( _size, _size, 8, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop ){
+			};
+			~Max8RawFileCamera(void){};
+		protected:
+			void capture(void){
+				if( this->state == standby || this->state == run ){
+					char path[255];
+					sprintf( path, format.c_str(), dirPath.c_str(), this->f_next);
+					std::ifstream fin(path, std::ios::in | std::ios::binary );
+					if( fin ){
+						for( int h = 0; h < this->height; h++){
+							for(int w = 0; w < this->width; w++){
+								if( !fin.eof()){
+									unsigned char src_c;
+                  unsigned short src, dst; 
+									fin.read( (char*)&src_c, sizeof(unsigned char) );
+                  src = static_cast<unsigned short>(src_c);
+									this->binaryTrans( src, dst );
+									this->setValue(w, h, dst);
+								}
+							}
+						}
+						this->f_tmp = this->f_next;
+						this->f_next+=this->f_skip;
+						this->state = run;
+					}else{
+						this->state = stop;
+					}
+					fin.close();
+
+					if( run == this->state ){
+						if( this->f_stop <= this->f_tmp ){
+							this->state = stop;
+						}
+					}
+				}
+			};
 			void binaryTrans( const unsigned short& src, unsigned short& dst){
 				/* do nothing */
 				dst = src;
 			};
+		};
+    
+    class SA4RawFileCamera : public RawFileCamera<unsigned short>{
+    public:
+        SA4RawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size = 512, int _fps = 1000 )
+        : RawFileCamera<unsigned short>( _size, _size, 12, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop )
+        {};
+        ~SA4RawFileCamera(void){};
+    protected:
+        void binaryTrans( const unsigned short& src, unsigned short& dst){
+          /* do nothing */
+          dst = src;
         };
+    };
         
-        class Mono8RawFileCamera : public RawFileCamera<unsigned char>{
-        public:
-            Mono8RawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size, int _fps ) : RawFileCamera<unsigned char>( _size, _size, 8, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop )
-            {};
-            ~Mono8RawFileCamera(void){};
-        protected:
-            void binaryTrans( const unsigned char& src, unsigned char& dst){
-				/* do nothing */
-				dst = src;
-			};
+    class Mono8RawFileCamera : public RawFileCamera<unsigned char>{
+    public:
+        Mono8RawFileCamera( const std::string& _dirPath, const std::string& _format, const int _f_start, const int _f_skip, const int _f_stop, int _size, int _fps ) 
+        : RawFileCamera<unsigned char>( _size, _size, 8, _fps, _dirPath, _format, _f_start, _f_skip, _f_stop )
+        {};
+        ~Mono8RawFileCamera(void){};
+    protected:
+        void binaryTrans( const unsigned char& src, unsigned char& dst){
+          /* do nothing */
+          dst = src;
         };
+    };
         
 		class ColorMap
 		{

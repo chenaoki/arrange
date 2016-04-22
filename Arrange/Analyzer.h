@@ -11,10 +11,10 @@
 namespace MLARR{
 
 	namespace Analyzer{
-        
+
         using namespace std;
         using namespace MLARR::Basic;
-        
+
 		template<class T_IN, class T_OUT>
 		class ImageAnalyzer : public MLARR::Basic::Image<T_OUT>
 		{
@@ -43,7 +43,7 @@ namespace MLARR{
                 return this->im_bin;
             };
 		};
-        
+
         template<class T_IN, class T_OUT>
 		class MovieAnalyzer : public Image<T_OUT>{
 		protected:
@@ -71,9 +71,9 @@ namespace MLARR{
 				}
 			};
 			virtual void execute(void) = 0;
-            
+
 		};
-        
+
         template<typename TIN, class TOUT>
         class TimeSeriesFilter{
         protected:
@@ -93,7 +93,7 @@ namespace MLARR{
             virtual void update(TIN& temp){};
         };
 
-		
+
 		template<class T>
 		class MaxImageAnalyzer : public ImageAnalyzer<T, T>
 		{
@@ -133,7 +133,7 @@ namespace MLARR{
 				}
 			};
 		};
-        
+
         template <typename T>
         class RangeDetector : public ImageAnalyzer<T, unsigned char>
         {
@@ -167,7 +167,31 @@ namespace MLARR{
             };
         };
 
-		
+        template<typename T>
+        class TimeSeriesAverageImage : public ImageAnalyzer<T, double>
+        {
+        private:
+            unsigned int cnt;
+            Image<double> imgSum;
+        public:
+            explicit TimeSeriesAverageImage(MLARR::Basic::Image<T>& _srcImg)
+            : ImageAnalyzer<T, double>(_srcImg.height, _srcImg.width, 0.0, _srcImg),
+            imgSum(_srcImg.height, _srcImg.width, 0.0), cnt(0){};
+            ~TimeSeriesAverageImage(void){};
+            void execute(void){
+                cnt++;
+                for( int h = 0; h < this->height; h++){
+                    for( int w = 0; w < this->width; w++){
+                        double s = *imgSum.at(w, h);
+                        s += *(this->srcImg.at( w, h ));
+                        imgSum.setValue( w, h, s );
+                        this->setValue( w, h,  s / static_cast<double>(cnt) );
+                    }
+                }
+            };
+        };
+
+
 		template<class T>
 		class ImageCropper : public ImageAnalyzer<T,T>
 		{
@@ -204,7 +228,7 @@ namespace MLARR{
 				delete temp;
 			};
 		};
-        
+
         template<class T>
         class MorphImage : public ImageAnalyzer<T, T>
         {
@@ -260,7 +284,7 @@ namespace MLARR{
 				}
 			};
 		};
-			
+
 
         template <class T>
         class ImageDiffX : public ImageAnalyzer<T,T>{
@@ -282,7 +306,7 @@ namespace MLARR{
                 }
             };
         };
-        
+
         template <class T>
         class ImageDiffY : public ImageAnalyzer<T,T>{
         public:
@@ -304,7 +328,7 @@ namespace MLARR{
             };
         };
 
-        
+
 		template <class T>
 		class BinaryOr : public ImageAnalyzer<T, T>{
 		private:
@@ -356,7 +380,7 @@ namespace MLARR{
 				}
 			};
 		};
-        
+
         template <class T>
 		class BinaryAdjacent : public ImageAnalyzer<T, T>{
 		private:
@@ -395,7 +419,7 @@ namespace MLARR{
 				}
 			};
 		};
-        
+
         template <class T>
 		class BinaryThinLine : public ImageAnalyzer<T, T>{ /* Tamura's algorhythm. */
         private:
@@ -451,19 +475,19 @@ namespace MLARR{
 			};
 			~BinaryThinLine(void){};
 			void execute(void){
-                
+
                 dynamic_cast< Image<T>& > (*this) = this->srcImg;
                 Image<T> imgTemp(*this);
-                
+
                 //IO::Display<unsigned char> dispSrc("src", this->srcImg, 1, 0, IO::colMap_gray);
                 //IO::Display<unsigned char> dispTmp("tmp", imgTemp, 1, 0, IO::colMap_gray);
                 //dispSrc.show();
-                
+
                 while(1){
-                    
+
                     bool flg = false;
                     std::vector<T> vec;
-                    
+
                     /* Pattern 1 check. */
                     imgTemp.clear(0);
                     for( int h = 0; h <= this->height - 3; h++){
@@ -492,7 +516,7 @@ namespace MLARR{
                     //cvWaitKey(-1);
                     dynamic_cast< Image<T>& >(*this) = imgTemp;
                     if(!flg) break;
-                    
+
                     /* Pattern 2 check. */
                     imgTemp.clear(0);
                     for( int h = 0; h <= this->height - 3; h++){
@@ -521,7 +545,7 @@ namespace MLARR{
                     //cvWaitKey(-1);
                     dynamic_cast< Image<T>& >(*this) = imgTemp;
                     if(!flg) break;
-                    
+
                 }
 			};
 		};
@@ -558,7 +582,7 @@ namespace MLARR{
 				}
 			};
 		};
-        
+
 
 
 		template<class T>
@@ -592,7 +616,7 @@ namespace MLARR{
 				}
 			};
 		};
-        
+
         class LabelImage : public ImageAnalyzer<unsigned char, unsigned char>{
         protected:
             std::map<int, int> map_LUT;
@@ -604,12 +628,12 @@ namespace MLARR{
             : ImageAnalyzer<unsigned char, unsigned char>( _srcImg.height, _srcImg.width, 0, _srcImg){};
             virtual ~LabelImage(void){};
             void execute(void){
-                
+
                 dynamic_cast<MLARR::Basic::Image<unsigned char>*>(this)->clear(0);
                 map_LUT.clear();
                 map_cluster.clear();
                 vec_ps.clear();
-                
+
                 int label = 1;
 				for( int h = 1; h < this->height - 1; h++){
 					for( int w = 1; w < this->width - 1; w++){
@@ -638,11 +662,11 @@ namespace MLARR{
                         }
                     }
                 }
-                
+
                 for( std::map<int,int>::iterator it = map_LUT.begin(); it != map_LUT.end(); it++){
                     it->second = map_LUT[it->second];
                 }
-                
+
                 for( int h = 0; h < this->height; h++){
 					for( int w = 0; w < this->width; w++){
                         if( *(this->at(w, h))){
@@ -652,7 +676,7 @@ namespace MLARR{
                         }
                     }
                 }
-                
+
                 std::map<int, std::vector<MLARR::Basic::Point<int> > >::iterator it;
                 for( it = this->map_cluster.begin(); it != map_cluster.end(); it++){
                     MLARR::Basic::Point<int> sum(0,0);
@@ -665,10 +689,10 @@ namespace MLARR{
                     mean.setY( sum.getY() / static_cast<double>(it->second.size()) );
                     this->vec_ps.push_back(mean);
                 }
-                
+
             };
         };
-        
+
         template< typename T>
         class ImageCOG : public ImageAnalyzer<T, T>{
         public:
@@ -680,7 +704,7 @@ namespace MLARR{
             virtual ~ImageCOG(void){};
         public:
             void execute(void){
-                
+
                 int cnt = 0;
                 double num;
                 double meanX, meanY;
@@ -707,11 +731,11 @@ namespace MLARR{
                 }
                 *dynamic_cast<Image<T>*>(this) = this->srcImg;
             };
-            
-        };
-        
 
-        
+        };
+
+
+
         template< class SHRINKER, class ANALYZER, typename T_IN, typename T_OUT >
         class PyramidDetector : public ImageAnalyzer< T_IN, unsigned char >{
         public:
@@ -739,7 +763,7 @@ namespace MLARR{
 
                 }
             };
-            
+
             virtual ~PyramidDetector(void){
                 for( int i = 0; i < vec_shrinker.size(); i++){
                     delete vec_shrinker[i];
@@ -749,11 +773,11 @@ namespace MLARR{
                     delete vec_analyzer[i];
                 }
             };
-            
+
             void setRoi( const MLARR::Basic::Image<unsigned char>& _roi ){
                 vec_analyzer[0]->setRoi( _roi );
                 for( int i = 1; i < vec_analyzer.size(); i++){
-                    
+
                     ImageShrinker<unsigned char> imgHalf( vec_analyzer[ i-1 ]->getRoi() );
                     imgHalf.execute();
                     /*
@@ -765,12 +789,12 @@ namespace MLARR{
                     */
                     vec_analyzer[i]->setRoi( imgHalf );
                 }
-                
+
             }
-            
+
             void execute(void){
                 using namespace MLARR;
-                
+
                 /* cascade execution */
                 for( int i = 0; i < vec_shrinker.size(); i++){
                     vec_shrinker[i]->execute();
@@ -784,13 +808,13 @@ namespace MLARR{
                     vec_analyzer[i-1]->setRoi( vec_doubler[i-1]->getBin() );
                 }
                 vec_analyzer[0]->execute();
-                
+
                 *dynamic_cast<Image<unsigned char>*>(this) = *dynamic_cast<Image<unsigned char>*>(vec_analyzer[0]);
-                
+
             };
-            
+
             void mergeSum(void){
-                
+
                 *(dynamic_cast<Image<unsigned char>*>(this)) = *vec_analyzer[0];
                 for( int i = 1; i < vec_analyzer.size(); i++){
                     int size = pow(2,i);
@@ -805,9 +829,9 @@ namespace MLARR{
                         }
                     }
                 }
-                
+
             };
-            
+
             void mergeFinest(void){
                 std::vector< Image<unsigned char> > vecBuf;
                 vecBuf.push_back( *vec_analyzer.back() );
@@ -833,7 +857,7 @@ namespace MLARR{
                 *dynamic_cast< Image<unsigned char>*>(this) = vecBuf.back();
             };
         };
-        
+
 	}
 
 }

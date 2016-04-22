@@ -48,6 +48,8 @@ namespace MLARR{
                         cam = static_cast<void*>( new HurricaneRawFileCamera( srcDir, format, f_start, f_skip, f_stop, size, frameRate ));
                     }else if( "raw_max" == camType ){
                         cam = static_cast<void*>( new MaxRawFileCamera( srcDir, format, f_start, f_skip, f_stop, size, frameRate ));
+                    }else if( "raw_max8" == camType ){
+                        cam = static_cast<void*>( new Max8RawFileCamera( srcDir, format, f_start, f_skip, f_stop, size, frameRate ));
                     }else if( "raw_sa4" ){
                         cam = static_cast<void*>( new SA4RawFileCamera( srcDir, format, f_start, f_skip, f_stop, size, frameRate ));
                     }else if( "raw_avt" == camType ){

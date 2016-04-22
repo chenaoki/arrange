@@ -32,7 +32,7 @@
 		"psdetect" : {
 			"detectionAlgo" : "div",
 			"closeRoi" : 2,
-			"medianFilterSize" : 9,
+			"medianFilterSize" : 1,
 			"adjacentSize" : 5,
 			"winSize" :  9,
 			"thre" : 0.8,

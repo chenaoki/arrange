@@ -28,8 +28,10 @@ if __name__ == '__main__':
 
     cur.execute( 'select * from sessions %s'  % where)
     session_list = cur.fetchall()
+    print '{0} sessions found.'.format(len(session_list))
 
     for ses in session_list:
+        print ses
         cur.execute( 'select * from samples where id = %s' % ses["sample_id"])
         sample_info = cur.fetchone()
         cur.execute( 'select * from cameras where id = %s' % sample_info["camera_id"])
@@ -43,8 +45,8 @@ if __name__ == '__main__':
         if camera_info["name"] == "max":
             filePrefix =ses["name"].lower()
         if camera_info["name"] == "sa4":
-            #filePrefix = ses["name"]
-            filePrefix = 'raw/cam/'
+            filePrefix = ses["name"]
+            #filePrefix = 'raw/cam/'
         if camera_info["name"] == "dalsa":
             filePrefix = "f_"
         filePrefix = filePrefix.replace('@', '')
@@ -61,9 +63,9 @@ if __name__ == '__main__':
         fileStr = fileStr.replace('FILE_PREFIX', filePrefix)
         fileStr = fileStr.replace('IMG_SIZE', str(ses["img_size"]))
         #if sample_info["mask"] > 0:
-        fileStr = fileStr.replace('MASK_IMG_NAME', sample_info["name"])
+          #fileStr = fileStr.replace('MASK_IMG_NAME', sample_info["name"])
         #else:
-            #fileStr = fileStr.replace('MASK_IMG_NAME', "white")
+        fileStr = fileStr.replace('MASK_IMG_NAME', "white")
 
         with open('%s_%s_%s_%s.json' % (engine, camera_info["name"],  sample_info["name"], ses["name"] ) , 'w') as outf:
             outf.write(fileStr)
